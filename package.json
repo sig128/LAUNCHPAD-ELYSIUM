@@ -1,0 +1,25 @@
+{
+  "name": "canopy",
+  "private": true,
+  "description": "Native Elysium launchpad, trading workspace, holder rewards and analytics. CANOPY is a configurable working name.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @canopy/web",
+    "build": "npm run build -w @canopy/web",
+    "start": "npm run start -w @canopy/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "contracts:build": "npm run build -w @canopy/contracts",
+    "contracts:test": "npm run test -w @canopy/contracts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "5.9.3"
+  }
+}

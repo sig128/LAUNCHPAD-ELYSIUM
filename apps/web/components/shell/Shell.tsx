@@ -1,0 +1,63 @@
+'use client';
+
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { SettingsProvider } from '@/lib/settings';
+import { DataProvider } from '@/lib/data';
+import { WalletProvider } from '@/lib/wallet';
+import { BackgroundProvider, JungleBackground } from './JungleBackground';
+import { Header } from './Header';
+import { BottomNav } from './BottomNav';
+import { SearchPalette } from './SearchPalette';
+
+const SearchContext = createContext<{ openSearch: () => void }>({ openSearch: () => undefined });
+export const useSearch = () => useContext(SearchContext);
+
+function isTyping(target: EventTarget | null) {
+  const el = target as HTMLElement | null;
+  if (!el) return false;
+  return el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
+}
+
+export function Shell({ children }: { children: ReactNode }) {
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen((o) => !o);
+      } else if (e.key === '/' && !isTyping(e.target) && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  return (
+    <SettingsProvider>
+      <DataProvider>
+        <WalletProvider>
+          <SearchContext.Provider value={{ openSearch: () => setSearchOpen(true) }}>
+            <a
+              href="#main"
+              className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-xl focus:bg-lime focus:px-4 focus:py-2 focus:text-on-lime"
+            >
+              Skip to content
+            </a>
+            <BackgroundProvider>
+              <JungleBackground />
+              <Header />
+            </BackgroundProvider>
+            <main id="main" className="relative mx-auto w-full max-w-[1640px] px-3 pb-32 pt-4 sm:px-4 md:pb-20 lg:px-5">
+              {children}
+            </main>
+            <BottomNav />
+            <SearchPalette open={searchOpen} onOpenChange={setSearchOpen} />
+          </SearchContext.Provider>
+        </WalletProvider>
+      </DataProvider>
+    </SettingsProvider>
+  );
+}

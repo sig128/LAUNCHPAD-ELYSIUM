@@ -1,0 +1,282 @@
+@import "tailwindcss";
+
+@theme {
+  --color-forest: #06110d;
+  --color-ink: #f1f5ef;
+  --color-ink-2: #b2c2b6;
+  --color-ink-3: #8fa596;
+  --color-lime: #c8f580;
+  --color-lime-hover: #d6f99a;
+  --color-on-lime: #10200a;
+  --color-up: #95d9aa;
+  --color-down: #ee929a;
+  --color-warn: #e9c17b;
+  --color-line: rgb(255 255 255 / 0.1);
+  --color-line-strong: rgb(255 255 255 / 0.16);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  --radius-panel: 22px;
+  --radius-ctl: 13px;
+  --ease-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+:root {
+  --glass: rgb(9 28 21 / 0.6);
+  --glass-dense: rgb(7 21 16 / 0.9);
+  --glass-solid: rgb(8 24 18 / 0.97);
+  --blur: blur(20px) saturate(1.15);
+  color-scheme: dark;
+}
+
+html {
+  background: #06110d;
+  color: var(--color-ink);
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+
+/* The page colour lives on html (the canvas) so the fixed background layer at z-index -10 paints above it.
+   A body background would paint over that layer and hide the video. */
+body {
+  background: transparent;
+  min-height: 100dvh;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-lime);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+::selection {
+  background: rgb(200 245 128 / 0.35);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 96, "SOFT" 40, "WONK" 0;
+  font-weight: 380;
+  letter-spacing: -0.022em;
+}
+
+.over-video {
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 0.35),
+    0 4px 28px rgb(0 0 0 / 0.45);
+}
+
+@layer components {
+  .panel {
+    background: var(--glass);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-panel);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.06),
+      0 30px 70px -36px rgb(0 0 0 / 0.65);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+  }
+  .panel-dense {
+    background: var(--glass-dense);
+  }
+  .inset {
+    background: rgb(255 255 255 / 0.035);
+    border: 1px solid rgb(255 255 255 / 0.07);
+    border-radius: 16px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 40px;
+    padding: 0 1rem;
+    border-radius: var(--radius-ctl);
+    font-weight: 550;
+    font-size: 14px;
+    transition:
+      background-color 160ms var(--ease-soft),
+      border-color 160ms var(--ease-soft),
+      transform 160ms var(--ease-soft),
+      color 160ms var(--ease-soft);
+    white-space: nowrap;
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+  .btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  .btn-primary {
+    background: var(--color-lime);
+    color: var(--color-on-lime);
+  }
+  .btn-primary:disabled {
+    background: rgb(200 245 128 / 0.18);
+    color: rgb(241 245 239 / 0.62);
+    opacity: 1;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--color-lime-hover);
+    transform: translateY(-1px);
+  }
+  .btn-glass {
+    background: rgb(255 255 255 / 0.06);
+    border: 1px solid var(--color-line);
+    color: var(--color-ink);
+  }
+  .btn-glass:hover:not(:disabled) {
+    background: rgb(255 255 255 / 0.1);
+    border-color: var(--color-line-strong);
+    transform: translateY(-1px);
+  }
+  .btn-quiet {
+    color: var(--color-ink-2);
+  }
+  .btn-quiet:hover:not(:disabled) {
+    color: var(--color-ink);
+    background: rgb(255 255 255 / 0.06);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 32px;
+    padding: 0 0.8rem;
+    border-radius: 999px;
+    font-size: 13.5px;
+    font-weight: 520;
+    color: var(--color-ink-2);
+    transition: background-color 160ms var(--ease-soft), color 160ms var(--ease-soft);
+  }
+  .chip:hover {
+    color: var(--color-ink);
+    background: rgb(255 255 255 / 0.06);
+  }
+  .chip[aria-pressed="true"],
+  .chip[aria-selected="true"],
+  .chip[aria-current="page"] {
+    color: var(--color-ink);
+    background: rgb(255 255 255 / 0.12);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+  }
+  .field {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 0.875rem;
+    border-radius: var(--radius-ctl);
+    background: rgb(0 0 0 / 0.22);
+    border: 1px solid var(--color-line);
+    color: var(--color-ink);
+    transition: border-color 160ms var(--ease-soft);
+  }
+  .field:hover {
+    border-color: var(--color-line-strong);
+  }
+  .field:focus-visible {
+    outline: none;
+    border-color: var(--color-lime);
+    box-shadow: 0 0 0 3px rgb(200 245 128 / 0.18);
+  }
+  .field::placeholder {
+    color: var(--color-ink-3);
+  }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 550;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+  .row-link {
+    transition: background-color 140ms var(--ease-soft);
+  }
+  .row-link:hover {
+    background: rgb(255 255 255 / 0.045);
+  }
+}
+
+/* Reduced transparency: opaque surfaces, no blur. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass: var(--glass-solid);
+    --glass-dense: var(--glass-solid);
+    --blur: none;
+  }
+}
+html[data-transparency="reduced"] {
+  --glass: var(--glass-solid);
+  --glass-dense: var(--glass-solid);
+  --blur: none;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --glass: rgb(8 24 18 / 0.92);
+    --glass-dense: var(--glass-solid);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.scroll-x {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 0.15) transparent;
+}
+
+[cmdk-item][data-selected="true"] {
+  background: rgb(255 255 255 / 0.08);
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+.anim-sheet {
+  animation: sheet-in 220ms var(--ease-soft);
+}
+.anim-fade {
+  animation: fade-in 180ms var(--ease-soft);
+}

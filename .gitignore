@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+cache/
+broadcast/
+*.log
+.env
+.env.local
+.DS_Store
+packages/contracts/out/
+packages/contracts/cache/
+test-results/
+apps/web/public/media/*.webm
+apps/web/public/media/*.mp4
+.transfer/
+apps/web/next-env.d.ts
