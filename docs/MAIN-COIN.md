@@ -1,5 +1,7 @@
 # CANOPY, the main coin: plan
 
+> Under review (9 November 2026): the owner now wants coins to live on pump.fun's curve with Elysium as a second door. See [PUMPFUN-LINK.md](PUMPFUN-LINK.md) for what is live and what blocks that design.
+
 Every launch pairs with CANOPY. CANOPY is one token on two chains, Elysium and Solana, joined by Wormhole Native Token Transfers (NTT). This file is the plan and its status. Nothing in it is deployed yet.
 
 ## Why one main coin
