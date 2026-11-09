@@ -24,9 +24,19 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+/**
+ * Sets the entrance stage before first paint so there is no flash: the intro shows only on a plain
+ * visit to "/" that has not entered yet this session. Without JavaScript no stage is set and the
+ * workspace shows directly.
+ */
+const STAGE_SCRIPT = `(function(){var d=document.documentElement;try{var intro=location.pathname==='/'&&!location.search&&sessionStorage.getItem('canopy:entered')!=='1';d.dataset.stage=intro?'intro':'app';}catch(e){d.dataset.stage='app';}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable} ${fraunces.variable}`}>
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable} ${fraunces.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: STAGE_SCRIPT }} />
+      </head>
       <body>
         <Shell>{children}</Shell>
       </body>

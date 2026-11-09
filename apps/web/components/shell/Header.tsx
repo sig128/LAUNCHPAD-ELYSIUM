@@ -114,7 +114,10 @@ export function Header() {
   const { openSearch } = useSearch();
   return (
     <header className="sticky top-0 z-40 px-3 pt-3 sm:px-4 lg:px-5">
-      <div className="panel mx-auto flex h-[60px] max-w-[1640px] items-center gap-1.5 rounded-[20px] px-2.5 sm:gap-2 sm:px-3">
+      <div
+        data-enter="down"
+        className="panel mx-auto flex h-[60px] max-w-[1640px] items-center gap-1.5 rounded-[20px] px-2.5 sm:gap-2 sm:px-3"
+      >
         <Link href="/" className="flex shrink-0 items-center gap-2 rounded-xl px-1.5 py-1 text-ink" aria-label={`${BRAND.name} home`}>
           <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-lime/15 text-lime ring-1 ring-lime/25">
             <IconLeaf size={18} />

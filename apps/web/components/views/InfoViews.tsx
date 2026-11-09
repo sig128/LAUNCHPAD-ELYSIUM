@@ -343,7 +343,7 @@ export function SettingsView() {
             onChange={(e) => update({ playbackRate: Number(e.target.value) })}
             className="w-full accent-[#c8f580]"
           />
-          <span className="mt-1 block text-[12.5px] text-ink-3">The footage is already slowed, so 1× is the natural pace.</span>
+          <span className="mt-1 block text-[12.5px] text-ink-3">Default 0.75×. The footage is already slowed to half speed, so much lower values can look less smooth.</span>
         </label>
         <Toggle label="Reduce transparency (solid panels, no blur)" checked={settings.reducedTransparency} onChange={(v) => update({ reducedTransparency: v })} />
         <p className="text-[12.5px] text-ink-3">The video also stays off when your system asks for reduced motion or data saving.</p>

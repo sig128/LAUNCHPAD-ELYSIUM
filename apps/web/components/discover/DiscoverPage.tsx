@@ -3,7 +3,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, type CSSProperties } from 'react';
 import {
   buildCandles,
   depthAt,
@@ -46,6 +46,10 @@ const DEFAULT_SORT: Record<Segment, SortKey> = {
   watchlist: 'volume',
 };
 const PAGE = 12;
+
+/** Entrance choreography hooks (see globals.css): panel order and the first rows' cascade. */
+const ix = (i: number) => ({ '--i': i }) as CSSProperties;
+const rowEnter = (idx: number) => (idx < 12 ? { 'data-enter-row': '', style: { '--r': idx } as CSSProperties } : {});
 
 interface RowData {
   t: DemoToken;
@@ -169,7 +173,7 @@ export function DiscoverPage() {
       <Intro asOf={asOf} />
       <PlatformStrip />
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <section aria-label="Discover markets" className="panel min-w-0 p-3 sm:p-4">
+        <section data-enter style={ix(3)} aria-label="Discover markets" className="panel min-w-0 p-3 sm:p-4">
           <div className="flex flex-wrap items-center gap-2">
             <div className="scroll-x -mx-1 flex max-w-full gap-1 px-1" role="tablist" aria-label="Market segment">
               {SEGMENTS.map((s) => (
@@ -273,11 +277,12 @@ export function DiscoverPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {visible.map((r) => {
+                    {visible.map((r, idx) => {
                       const watched = settings.watchlist.includes(r.t.address.toLowerCase());
                       return (
                         <tr
                           key={r.t.address}
+                          {...rowEnter(idx)}
                           className="row-link cursor-pointer [&>td]:border-t [&>td]:border-white/6"
                           onClick={() => router.push(`/token/${r.t.address}`)}
                         >
@@ -356,8 +361,8 @@ export function DiscoverPage() {
                 </table>
               </div>
               <ul className="mt-3 divide-y divide-white/6 md:hidden">
-                {visible.map((r) => (
-                  <li key={r.t.address}>
+                {visible.map((r, idx) => (
+                  <li key={r.t.address} {...rowEnter(idx)}>
                     <Link href={`/token/${r.t.address}`} className="row-link -mx-1 flex items-center gap-3 rounded-xl px-1 py-3">
                       <TokenArt symbol={r.t.symbol} hue={r.t.hue} />
                       <div className="min-w-0 flex-1">
@@ -396,7 +401,7 @@ export function DiscoverPage() {
           </div>
         </section>
 
-        <aside className="hidden xl:block">
+        <aside data-enter style={ix(4)} className="hidden xl:block">
           <div className="sticky top-[88px] space-y-4">
             {selectedToken ? (
               <div className="panel panel-dense p-4">
@@ -449,7 +454,7 @@ export function DiscoverPage() {
 
 function Intro({ asOf }: { asOf?: number | null }) {
   return (
-    <section className="flex flex-col gap-3 px-1 pt-2 sm:flex-row sm:items-end sm:justify-between">
+    <section data-enter style={ix(1)} className="flex flex-col gap-3 px-1 pt-2 sm:flex-row sm:items-end sm:justify-between">
       <div className="over-video">
         <h1 className="display text-[38px] leading-[1.05] text-ink sm:text-[50px]">{COPY.heroTitle}</h1>
         <p className="mt-2 text-[16px] text-ink-2 sm:text-[17px]">{COPY.heroSub}</p>
@@ -490,7 +495,7 @@ function PlatformStrip() {
   const s = useMemo(() => (ds ? platformStats(ds) : null), [ds]);
   if (!s) return null;
   return (
-    <section aria-label="Platform statistics" className="panel grid grid-cols-2 gap-x-6 gap-y-3 px-4 py-3.5 sm:grid-cols-3 lg:grid-cols-6">
+    <section data-enter style={ix(2)} aria-label="Platform statistics" className="panel grid grid-cols-2 gap-x-6 gap-y-3 px-4 py-3.5 sm:grid-cols-3 lg:grid-cols-6">
       <Stat label="24h volume" value={`${fmtCompact(s.volume['24h'])} HYPE`} />
       <Stat label="Active markets, 24h" value={`${s.activeMarkets24h} of ${s.launches}`} />
       <Stat label="Launches, 7d" value={s.launches7d} />

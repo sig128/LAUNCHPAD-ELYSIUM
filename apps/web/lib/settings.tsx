@@ -35,7 +35,7 @@ export const DEFAULT_SETTINGS: Settings = {
   watchlist: [],
 };
 
-const KEY = 'canopy:settings:v1';
+const KEY = 'canopy:settings:v2';
 
 interface Ctx {
   settings: Settings;

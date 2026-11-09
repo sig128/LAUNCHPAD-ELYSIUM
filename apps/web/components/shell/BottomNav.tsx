@@ -40,6 +40,8 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Primary"
+      data-enter="up"
+      style={{ '--i': 4 } as React.CSSProperties}
       className="panel fixed inset-x-2 bottom-2 z-40 rounded-[22px] px-1 pb-[max(env(safe-area-inset-bottom),0px)] md:hidden"
     >
       <Suspense fallback={<div className="h-14" />}>

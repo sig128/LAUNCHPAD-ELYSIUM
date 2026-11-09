@@ -7,7 +7,7 @@ import { MODE, NETWORK, WALLETCONNECT_PROJECT_ID } from '@/lib/config';
 import { useWallet } from '@/lib/wallet';
 import { IconClose, IconWallet } from '@/components/ui/Icons';
 
-export function ConnectButton() {
+export function ConnectButton({ variant = 'primary' }: { variant?: 'primary' | 'glass' }) {
   const w = useWallet();
   const [open, setOpen] = useState(false);
   const connected = w.status === 'connected' && w.address;
@@ -15,7 +15,7 @@ export function ConnectButton() {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
-        <button type="button" className={`btn ${connected ? 'btn-glass' : 'btn-primary'} h-10 px-3 sm:px-4`}>
+        <button type="button" className={`btn ${connected || variant === 'glass' ? 'btn-glass backdrop-blur-md' : 'btn-primary'} h-10 px-3 sm:px-4`}>
           <IconWallet size={16} />
           {connected ? (
             <span className="num font-mono text-[13px]">

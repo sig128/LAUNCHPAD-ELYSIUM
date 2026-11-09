@@ -237,8 +237,195 @@ html[data-transparency="reduced"] {
   *::after {
     transition-duration: 1ms !important;
     animation-duration: 1ms !important;
+    transition-delay: 0ms !important;
+    animation-delay: 0ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ---------- Entrance choreography ----------
+   html[data-stage] = intro | leaving | entering | app (set before paint by the layout script).
+   Workspace elements carry data-enter (with --i for order) or data-enter-row (with --r). */
+:root {
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Exit curve: moves the moment you click, then trails off. */
+  --ease-in-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.intro-overlay {
+  display: none;
+}
+html[data-stage="intro"] .intro-overlay,
+html[data-stage="leaving"] .intro-overlay {
+  display: flex;
+}
+html[data-stage="leaving"] .intro-overlay {
+  pointer-events: none;
+}
+
+html[data-stage="intro"] [data-enter],
+html[data-stage="leaving"] [data-enter],
+html[data-stage="intro"] [data-enter-row],
+html[data-stage="leaving"] [data-enter-row] {
+  opacity: 0;
+}
+
+html[data-stage="entering"] [data-enter] {
+  animation: enter-rise 1150ms var(--ease-expo) both;
+  animation-delay: calc(var(--i, 0) * 95ms);
+  will-change: transform, opacity;
+}
+html[data-stage="entering"] [data-enter="down"] {
+  animation-name: enter-drop;
+}
+html[data-stage="entering"] [data-enter="up"] {
+  animation-name: enter-lift;
+}
+html[data-stage="entering"] [data-enter-row] {
+  animation: enter-row 850ms var(--ease-expo) both;
+  animation-delay: calc(560ms + var(--r, 0) * 45ms);
+}
+
+@keyframes enter-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 38px, 0) scale(0.975);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes enter-drop {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -26px, 0) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes enter-lift {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 30px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes enter-row {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Intro arrival: one orchestrated moment on load. */
+.intro-rise {
+  animation: intro-rise 1300ms var(--ease-expo) both;
+  animation-delay: calc(var(--d, 0) * 1ms);
+}
+.intro-letter {
+  display: inline-block;
+  animation: intro-letter 1500ms var(--ease-expo) both;
+  animation-delay: calc(180ms + var(--l, 0) * 75ms);
+}
+@keyframes intro-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 26px, 0);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+@keyframes intro-letter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.32em, 0) rotate(3deg);
+    filter: blur(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* Get started: the intro lifts away, letters first. */
+html[data-stage="leaving"] .intro-letter {
+  animation: intro-letter-out 620ms var(--ease-in-soft) both;
+  animation-delay: calc(var(--l, 0) * 38ms);
+}
+html[data-stage="leaving"] .intro-rise {
+  animation: intro-out 520ms var(--ease-in-soft) both;
+  animation-delay: calc(var(--o, 0) * 45ms);
+}
+@keyframes intro-letter-out {
+  to {
+    opacity: 0;
+    transform: translate3d(0, -0.45em, 0) scale(1.06);
+    filter: blur(16px);
+  }
+}
+@keyframes intro-out {
+  to {
+    opacity: 0;
+    transform: translate3d(0, -18px, 0);
+    filter: blur(8px);
+  }
+}
+
+/* Background responds to the stage: a slow camera pull-back and the workspace dim fading in. */
+.bg-video {
+  transform: scale(1);
+  transition: transform 2600ms var(--ease-expo);
+}
+html[data-stage="intro"] .bg-video {
+  transform: scale(1.08);
+}
+.bg-dim {
+  opacity: 1;
+  transition: opacity 1300ms var(--ease-soft);
+}
+html[data-stage="intro"] .bg-dim {
+  opacity: 0;
+}
+.bg-glow {
+  opacity: 0;
+  transition: opacity 1000ms var(--ease-soft);
+}
+html[data-stage="intro"] .bg-glow {
+  opacity: 1;
+}
+
+.intro-wordmark {
+  font-size: clamp(84px, 17vw, 236px);
+  font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 0;
+  font-weight: 340;
+  letter-spacing: -0.045em;
+  text-shadow: 0 12px 70px rgb(0 0 0 / 0.35);
+}
+
+.cta-glow {
+  box-shadow:
+    0 0 0 1px rgb(200 245 128 / 0.35),
+    0 18px 50px -14px rgb(200 245 128 / 0.55);
+}
+.cta-glow:hover {
+  box-shadow:
+    0 0 0 1px rgb(214 249 154 / 0.5),
+    0 22px 64px -12px rgb(200 245 128 / 0.7);
 }
 
 .sr-only {

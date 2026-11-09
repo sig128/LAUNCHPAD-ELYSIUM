@@ -9,6 +9,7 @@ export const BRAND = {
 export const COPY = {
   heroTitle: 'Find your next market.',
   heroSub: 'Launch, trade and earn on Elysium.',
+  introSub: 'Launch, trade and earn on Elysium. Holders receive 60% of the trading fees each market collects.',
   demoNotice:
     'You are looking at demo data. Markets, trades, holders and fees are simulated from fixtures, and no transaction can be sent.',
 };
@@ -20,8 +21,8 @@ export const MEDIA = {
   poster: process.env.NEXT_PUBLIC_BG_POSTER || '/media/jungle-poster.webp',
   /** Lighter 720p encode used on phones. */
   mobileMp4: process.env.NEXT_PUBLIC_BG_MOBILE_MP4 || '/media/jungle-mobile.mp4',
-  /** The supplied footage is already slowed to half speed, so natural 1x is the default. */
-  playbackRate: Number(process.env.NEXT_PUBLIC_BG_PLAYBACK_RATE || '1'),
+  /** The footage is already slowed to half speed; the owner asked for slower still, so 0.75x is the default. */
+  playbackRate: Number(process.env.NEXT_PUBLIC_BG_PLAYBACK_RATE || '0.75'),
 };
 
 export type AppMode = 'demo' | 'local' | 'live';

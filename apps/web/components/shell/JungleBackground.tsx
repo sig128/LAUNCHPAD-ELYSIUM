@@ -87,12 +87,12 @@ export function JungleBackground() {
             'radial-gradient(110% 80% at 18% 8%, #1b5a3e 0%, transparent 58%), radial-gradient(90% 70% at 88% 28%, #134631 0%, transparent 55%), radial-gradient(120% 90% at 50% 115%, #0d3524 0%, transparent 62%), #06110d',
         }}
       />
-      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${MEDIA.poster})` }} />
+      <div className="bg-video absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${MEDIA.poster})` }} />
       {allowed ? (
         <video
           key={mobile ? 'mobile' : 'desktop'}
           ref={video}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="bg-video absolute inset-0 h-full w-full object-cover"
           muted
           loop
           playsInline
@@ -106,15 +106,25 @@ export function JungleBackground() {
           <source src={MEDIA.mp4} type="video/mp4" onError={() => setFailed(true)} />
         </video>
       ) : null}
-      {/* Dark emerald scrim: enough for contrast over bright sky, light enough to keep the footage. */}
-      <div className="absolute inset-0" style={{ background: 'rgb(4 16 11 / 0.3)' }} />
+      {/* Dark emerald scrim: light on the intro so the footage leads, deeper once the workspace is up. */}
+      <div className="absolute inset-0" style={{ background: 'rgb(4 16 11 / 0.14)' }} />
       <div
         className="absolute inset-0"
         style={{ background: 'radial-gradient(ellipse 130% 100% at 50% 42%, transparent 48%, rgb(2 9 6 / 0.42) 100%)' }}
       />
       <div
-        className="absolute inset-0"
-        style={{ background: 'linear-gradient(to bottom, rgb(3 11 8 / 0.42), transparent 24%, transparent 78%, rgb(3 11 8 / 0.38))' }}
+        className="bg-dim absolute inset-0"
+        style={{
+          background:
+            'linear-gradient(to bottom, rgb(3 11 8 / 0.42), transparent 24%, transparent 78%, rgb(3 11 8 / 0.38)), rgb(4 16 11 / 0.18)',
+        }}
+      />
+      <div
+        className="bg-glow absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 44% 38% at 50% 52%, rgb(2 10 7 / 0.5), transparent 72%), linear-gradient(to bottom, rgb(3 11 8 / 0.32), transparent 18%)',
+        }}
       />
     </div>
   );
