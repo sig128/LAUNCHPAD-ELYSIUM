@@ -644,7 +644,11 @@ const FAQ = [
     q: 'Can a creator pull the liquidity?',
     a: 'No. The launch liquidity is held by a locker contract that has no function to withdraw it. A creator can still sell tokens they bought, and those sales are labelled on the market page.',
   },
-  { q: 'What does a trade cost?', a: 'The 1% fee on the HYPE side plus Elysium network gas. Nothing else is taken.' },
+  { q: 'What does a trade cost?', a: 'The 1% fee on the pair side plus Elysium network gas. Nothing else is taken.' },
+  {
+    q: 'Can I pair my launch with a stock?',
+    a: 'The contracts support it: a market can trade against an approved stock token instead of HYPE, and its fee, holder rewards and creator fees are then paid in that stock. Stock pairs open once tokens such as Ondo’s are live on Elysium and approved, and only where local rules allow tokenized stocks.',
+  },
   { q: 'When can I claim rewards?', a: 'Any time, including after you sell. Rewards that have finished releasing are claimable straight away.' },
   { q: 'Are the contracts audited?', a: 'Not yet. They are tested against real Uniswap v4 contracts locally, which is not an audit. Treat every market as high risk.' },
   { q: 'Why do I see “No markets yet”?', a: 'The Canopy launch contracts are not deployed on Elysium mainnet yet. Markets appear as soon as the first one launches.' },

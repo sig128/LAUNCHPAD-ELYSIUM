@@ -5,3 +5,4 @@ export * from './format.ts';
 export * from './networks.ts';
 export * from './metrics.ts';
 export * from './demo.ts';
+export * from './pairs.ts';

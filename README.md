@@ -9,7 +9,8 @@ The UI is a frosted trading workspace over a full-screen jungle video. The video
 ```bash
 npm install
 npm run dev            # http://localhost:3000, demo mode
-npm test               # SDK: fee math, reward ledger, fixture reconciliation
+npm test               # SDK math and the contract integration tests
+npm run contracts:test # contracts only: compiles with solc 0.8.26, tests on a local Anvil chain
 ```
 
 Production: `npm run build && npm start`.
@@ -29,11 +30,13 @@ Production defaults come from `apps/web/.env.production`: live mode on Elysium m
 | --- | --- |
 | `apps/web` | Next.js 16 app: discovery, market workspace, launch, rewards, portfolio, analytics, creator tools, contracts, docs, settings |
 | `packages/sdk` | Network registry, fee policy v1 math, reward ledger reference implementation, metric dictionary, deterministic demo fixtures |
-| `packages/contracts` | Foundry project (contracts in progress, see status) |
+| `packages/contracts` | Solidity: launch factory, Uniswap v4 fee hook, fee vault, reward-paying token, seed locker, router. Integration tests run on Anvil against Uniswap's published PoolManager |
 
 ## Modes
 
 - **demo**: deterministic fixtures, always labelled "Demo data", no wallet writes. Every figure is produced by replaying trades through the real fee and reward math, so totals reconcile.
 - **local** and **live**: show explicit "unavailable" states until the contracts and indexer exist. A failed live connection never falls back to demo data.
+
+Each launch picks its pair asset: native HYPE, or an ERC-20 the factory owner allowlists, such as a tokenized stock. Fees and holder rewards are paid in that asset. See the stock-pair checklist in the status file.
 
 See [docs/STATUS.md](docs/STATUS.md) for exactly what works and what does not yet.

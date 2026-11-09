@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { E18, fmtAmount, fmtBps, fmtCompact, fmtPrice, initialCurve, parseAmount, quoteBuyExactIn, splitFee, spotPriceX18, TOTAL_SUPPLY } from '@canopy/sdk';
+import { E18, fmtAmount, fmtBps, fmtCompact, fmtPrice, initialCurve, PAIR_ASSETS, parseAmount, quoteBuyExactIn, splitFee, spotPriceX18, TOTAL_SUPPLY } from '@canopy/sdk';
 import { writeBlockReason } from '@/lib/config';
 import { KeyValue, TokenArt } from '@/components/ui/primitives';
 
@@ -26,6 +26,8 @@ export function LaunchView() {
   const [fdvInput, setFdvInput] = useState('3000');
   const [buyInput, setBuyInput] = useState('');
   const [surrender, setSurrender] = useState(false);
+  const [pairId, setPairId] = useState('hype');
+  const pair = PAIR_ASSETS.find((a) => a.id === pairId) ?? PAIR_ASSETS[0];
 
   const fdv = parseAmount(fdvInput);
   const buy = buyInput.trim() ? parseAmount(buyInput) : 0n;
@@ -34,7 +36,7 @@ export function LaunchView() {
     symbol: symbol && !/^[A-Z0-9]{2,10}$/.test(symbol) ? 'Use 2 to 10 capital letters or digits.' : null,
     image: safeHttpsUrl(image),
     site: safeHttpsUrl(site),
-    fdv: fdv === null ? 'Enter a number.' : fdv < 500n * E18 ? 'Opening FDV must be at least 500 HYPE.' : fdv > 1_000_000n * E18 ? 'Opening FDV must be at most 1,000,000 HYPE.' : null,
+    fdv: fdv === null ? 'Enter a number.' : fdv < 500n * E18 ? `Opening FDV must be at least 500 ${pair.symbol}.` : fdv > 1_000_000n * E18 ? `Opening FDV must be at most 1,000,000 ${pair.symbol}.` : null,
     buy: buy === null ? 'Enter a number, or leave it empty.' : null,
   };
   const preview = useMemo(() => {
@@ -75,12 +77,61 @@ export function LaunchView() {
           </Field>
         </fieldset>
 
+        <fieldset className="mt-6">
+          <legend className="mb-1 text-[15px] font-semibold">Pair with</legend>
+          <p className="mb-3 max-w-prose text-[13.5px] text-ink-2">
+            Your market trades against this asset, and its 1% fee, holder rewards and creator fees are paid in it. It can’t be changed after
+            launch.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Pair asset">
+            {PAIR_ASSETS.map((a) => {
+              const available = a.status === 'available';
+              const selected = pairId === a.id;
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  aria-disabled={!available}
+                  onClick={() => available && setPairId(a.id)}
+                  title={a.note}
+                  className={`inset flex items-center gap-3 p-3 text-left transition-colors ${
+                    selected ? 'ring-1 ring-lime/50' : available ? 'hover:bg-white/6' : 'cursor-not-allowed opacity-60'
+                  }`}
+                >
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[12px] font-semibold ${
+                      a.kind === 'native' ? 'bg-lime/15 text-lime' : 'bg-white/8 text-ink'
+                    }`}
+                  >
+                    {a.symbol.slice(0, 4)}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-[14px] text-ink">
+                      {a.symbol}
+                      {a.issuer ? <span className="text-ink-3"> by {a.issuer}</span> : null}
+                    </span>
+                    <span className={`block text-[12px] ${available ? 'text-ink-3' : 'text-warn'}`}>
+                      {available ? a.name : 'Not on Elysium yet'}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-[12.5px] text-ink-3">
+            Stock pairs use tokenized stocks, which are restricted in some countries, including the US and UK. They open once a stock token is live on
+            Elysium and approved.
+          </p>
+        </fieldset>
+
         <fieldset className="mt-6 grid gap-4 sm:grid-cols-2">
           <legend className="mb-2 text-[15px] font-semibold">Opening market</legend>
-          <Field label="Opening FDV (HYPE)" error={errors.fdv} hint="Sets the starting price: FDV ÷ 1,000,000,000 tokens. It is not HYPE you deposit.">
+          <Field label={`Opening FDV (${pair.symbol})`} error={errors.fdv} hint={`Sets the starting price: FDV ÷ 1,000,000,000 tokens. It is not ${pair.symbol} you deposit.`}>
             <input className="field num" value={fdvInput} onChange={(e) => setFdvInput(e.target.value)} inputMode="decimal" />
           </Field>
-          <Field label="Your first buy (HYPE, optional)" error={errors.buy} hint="Bought in the launch transaction at the opening price, with the same 1% fee. Shown publicly as a creator buy.">
+          <Field label={`Your first buy (${pair.symbol}, optional)`} error={errors.buy} hint="Bought in the launch transaction at the opening price, with the same 1% fee. Shown publicly as a creator buy.">
             <input className="field num" value={buyInput} onChange={(e) => setBuyInput(e.target.value)} inputMode="decimal" placeholder="0" />
           </Field>
         </fieldset>
@@ -131,8 +182,9 @@ export function LaunchView() {
           <KeyValue
             rows={[
               ['Supply', '1,000,000,000, minted once'],
-              ['Fee policy', 'v1: 1.00% on HYPE side'],
-              ['Opening price', preview ? `${fmtPrice(preview.price)} HYPE` : 'n/a'],
+              ['Pair', pair.symbol],
+              ['Fee policy', `v1: 1.00% on the ${pair.symbol} side`],
+              ['Opening price', preview ? `${fmtPrice(preview.price)} ${pair.symbol}` : 'n/a'],
               [
                 'Your first buy',
                 preview?.q
@@ -146,14 +198,14 @@ export function LaunchView() {
           />
           {preview ? (
             <div className="inset p-3.5 text-[13px] text-ink-2">
-              <div className="mb-1 text-ink">On a 1 HYPE trade the fee is 0.01 HYPE:</div>
+              <div className="mb-1 text-ink">On a 1 {pair.symbol} trade the fee is 0.01 {pair.symbol}:</div>
               holders {fmtAmount(preview.example.holders, 18, 4)}, reserve {fmtAmount(preview.example.reserve, 18, 4)}, creator{' '}
               {fmtAmount(preview.example.creator, 18, 4)}, liquidity growth {fmtAmount(preview.example.liquidity, 18, 4)}, protocol{' '}
               {fmtAmount(preview.example.protocol, 18, 4)}.
             </div>
           ) : null}
           <p className="text-[12.5px] text-ink-3">
-            Liquidity starts as token inventory only. No HYPE backs the opening price, and there is no guaranteed floor or return.
+            Liquidity starts as token inventory only. No {pair.symbol} backs the opening price, and there is no guaranteed floor or return.
           </p>
           <button type="button" className="btn btn-primary h-12 w-full text-[15px]" disabled={!complete || Boolean(blocked)}>
             Launch market
