@@ -26,6 +26,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@canopy/sdk": [
+        "../../packages/sdk/src/index.ts"
       ]
     }
   },

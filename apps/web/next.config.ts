@@ -4,7 +4,8 @@ import path from 'node:path';
 const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  transpilePackages: ['@canopy/sdk'],
+  // The SDK is imported as source through the tsconfig path alias, so the web app installs and
+  // builds on its own (Vercel Root Directory: apps/web) without a workspace link.
   turbopack: { root: path.join(__dirname, '../..') },
   async headers() {
     return [

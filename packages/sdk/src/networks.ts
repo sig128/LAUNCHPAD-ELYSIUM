@@ -76,7 +76,7 @@ export const ELYSIUM: NetworkConfig = {
   },
   docsUrl: 'https://elysium.kinetiq.xyz/docs',
   notes: [
-    'Chain ID 99901 is published by Uniswap\'s deployment registry and Alchemy. On 2026-11-09 the Kinetiq "Connecting to Elysium" page still listed mainnet details as coming soon, so the chain ID stays unverified until the startup check reads eth_chainId from a configured RPC.',
+    'Mainnet is reported live by the project owner (2026-11-09). Chain ID 99901 comes from Uniswap\'s deployment registry and Chainstack. On the same day Kinetiq\'s connection page and Alchemy\'s FAQ still described mainnet as not launched and no public RPC was documented, so the app confirms the chain itself: on load it reads eth_chainId and checks for contract code at every infrastructure address through the configured RPC.',
     'Mainnet WHYPE is not yet published by Kinetiq (only a testnet address is). Pools use native HYPE as the quote currency, so WHYPE is not required for trading.',
     'Explorer transaction and address URL patterns are not documented yet, so the app shows hashes with copy actions instead of building links.',
   ],

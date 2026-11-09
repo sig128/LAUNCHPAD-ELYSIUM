@@ -28,7 +28,7 @@ export const DEFAULT_SETTINGS: Settings = {
   quickBuy: ['1', '5', '10', '25'],
   slippageBps: 100,
   videoEnabled: true,
-  videoOnMobile: false,
+  videoOnMobile: true,
   playbackRate: Number.isFinite(MEDIA.playbackRate) && MEDIA.playbackRate > 0 ? MEDIA.playbackRate : 1,
   reducedTransparency: false,
   columns: DEFAULT_COLUMNS,

@@ -2,34 +2,48 @@
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { getDemoDataset, type DemoDataset } from '@canopy/sdk';
-import { MODE } from './config';
+import { MODE, NETWORK } from './config';
 
 /**
- * Market data source. Demo mode reads deterministic fixtures. Local and live modes read the
- * indexer API; until that service exists the UI shows an explicit unavailable state.
+ * Market data source.
+ * - demo: deterministic, labelled fixtures.
+ * - live: the real state of CANOPY on the target network. Until our factory is deployed there are
+ *   provably no CANOPY markets, so the dataset is empty and every count is a true zero.
+ * - local: needs the local chain and indexer, which this build does not run yet.
  * A failed live connection never falls back to demo data.
  */
 interface DataState {
   ds: DemoDataset | null;
   unavailableReason: string | null;
   asOf: number | null;
+  live: boolean;
 }
 
-const DataContext = createContext<DataState>({ ds: null, unavailableReason: 'Loading', asOf: null });
+const DataContext = createContext<DataState>({ ds: null, unavailableReason: 'Loading', asOf: null, live: false });
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const value = useMemo<DataState>(() => {
     if (MODE === 'demo') {
       const ds = getDemoDataset();
-      return { ds, unavailableReason: null, asOf: ds.anchor };
+      return { ds, unavailableReason: null, asOf: ds.anchor, live: false };
+    }
+    if (MODE === 'live' && NETWORK.own.length === 0) {
+      const now = Math.floor(Date.now() / 1000);
+      return {
+        ds: { anchor: now, tokens: [], byAddress: new Map(), demoWallet: '0x0000000000000000000000000000000000000000' },
+        unavailableReason: null,
+        asOf: now,
+        live: true,
+      };
     }
     return {
       ds: null,
       asOf: null,
+      live: MODE === 'live',
       unavailableReason:
         MODE === 'local'
-          ? 'The local indexer API is not wired into the web app yet. Contracts run locally, but discovery reads will come from apps/indexer in the next slice.'
-          : 'Live Elysium data needs our deployed factory and the indexer. Neither exists yet, so there is nothing real to show.',
+          ? 'Local mode needs the Anvil chain and indexer, which are not wired into this build yet.'
+          : 'Market reads need the CANOPY indexer, which is not deployed yet.',
     };
   }, []);
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

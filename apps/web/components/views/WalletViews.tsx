@@ -20,7 +20,9 @@ function useDemoPositions() {
 function WalletNote() {
   return MODE === 'demo' ? (
     <p className="text-[13px] text-ink-2">Showing the demo wallet. Your own wallet’s positions appear in local and live modes.</p>
-  ) : null;
+  ) : (
+    <p className="text-[13px] text-ink-2">No CANOPY market has launched yet, so no wallet holds positions, fees or rewards here.</p>
+  );
 }
 
 export function RewardsView() {

@@ -9,6 +9,7 @@ import { IconChevron, IconLeaf, IconSearch } from '@/components/ui/Icons';
 import { useSearch } from './Shell';
 import { ConnectButton } from './ConnectButton';
 import { BackgroundToggle } from './JungleBackground';
+import { healthLabel, useHealth } from '@/lib/health';
 
 const NAV = [
   { href: '/', label: 'Discover' },
@@ -85,6 +86,29 @@ function MoreMenu({ pathname }: { pathname: string }) {
   );
 }
 
+function NetworkStatus() {
+  const health = useHealth();
+  const label = healthLabel(health);
+  const dot = { up: 'bg-up', warn: 'bg-warn', down: 'bg-down', neutral: 'bg-ink-3' }[label.tone];
+  return (
+    <Link
+      href="/contracts"
+      className="hidden items-center gap-2 rounded-xl px-2 py-1 text-[13px] text-ink-2 hover:bg-white/6 md:flex"
+      title={`${NETWORK.name}, chain ${NETWORK.chainId}. ${label.detail}`}
+    >
+      {MODE === 'demo' ? (
+        <DemoTag />
+      ) : (
+        <span className="tag bg-white/6 text-ink ring-1 ring-white/10">
+          <span className={`h-1.5 w-1.5 rounded-full ${dot}`} aria-hidden />
+          {label.text}
+        </span>
+      )}
+      <span className="hidden xl:inline">{NETWORK.name.replace('Kinetiq ', '')}</span>
+    </Link>
+  );
+}
+
 export function Header() {
   const pathname = usePathname();
   const { openSearch } = useSearch();
@@ -115,14 +139,7 @@ export function Header() {
           <span className="hidden truncate sm:inline">Search name, ticker or address</span>
           <kbd className="ml-auto hidden rounded-md border border-line px-1.5 font-sans text-[11.5px] text-ink-3 sm:inline">/</kbd>
         </button>
-        <Link
-          href="/contracts"
-          className="hidden items-center gap-2 rounded-xl px-2 py-1 text-[13px] text-ink-2 hover:bg-white/6 md:flex"
-          title={`Target network: ${NETWORK.name}, chain ${NETWORK.chainId}`}
-        >
-          {MODE === 'demo' ? <DemoTag /> : null}
-          <span className="hidden xl:inline">{NETWORK.name.replace('Kinetiq ', '')}</span>
-        </Link>
+        <NetworkStatus />
         <BackgroundToggle />
         <ConnectButton />
       </div>

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { SettingsProvider } from '@/lib/settings';
 import { DataProvider } from '@/lib/data';
 import { WalletProvider } from '@/lib/wallet';
+import { HealthProvider } from '@/lib/health';
 import { BackgroundProvider, JungleBackground } from './JungleBackground';
 import { Header } from './Header';
 import { BottomNav } from './BottomNav';
@@ -37,6 +38,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <SettingsProvider>
+      <HealthProvider>
       <DataProvider>
         <WalletProvider>
           <SearchContext.Provider value={{ openSearch: () => setSearchOpen(true) }}>
@@ -58,6 +60,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </SearchContext.Provider>
         </WalletProvider>
       </DataProvider>
+      </HealthProvider>
     </SettingsProvider>
   );
 }

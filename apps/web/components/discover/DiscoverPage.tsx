@@ -17,7 +17,8 @@ import {
   type DemoToken,
   type WindowKey,
 } from '@canopy/sdk';
-import { COPY, MODE } from '@/lib/config';
+import { COPY, MODE, NETWORK } from '@/lib/config';
+import { healthLabel, useHealth } from '@/lib/health';
 import { useData } from '@/lib/data';
 import { useSettings } from '@/lib/settings';
 import { Address, Change, DemoTag, Pill, Stat, TokenArt, Unavailable } from '@/components/ui/primitives';
@@ -224,7 +225,17 @@ export function DiscoverPage() {
             />
           </div>
 
-          {visible.length === 0 ? (
+          {visible.length === 0 && ds.tokens.length === 0 ? (
+            <div className="py-16 text-center">
+              <p className="display text-[26px] text-ink">No markets yet</p>
+              <p className="mx-auto mt-2 max-w-md text-[14px] text-ink-2">
+                Nothing has launched on CANOPY yet. Markets appear here the moment the first one launches.
+              </p>
+              <Link href="/launch" className="btn btn-glass mt-5">
+                See how launching works
+              </Link>
+            </div>
+          ) : visible.length === 0 ? (
             <div className="py-14 text-center">
               <p className="text-[15px] text-ink">{seg === 'watchlist' && !q ? 'Your watchlist is empty.' : 'No market matches this filter.'}</p>
               <p className="mt-1 text-[13.5px] text-ink-2">
@@ -451,8 +462,26 @@ function Intro({ asOf }: { asOf?: number | null }) {
           {COPY.demoNotice}
           {asOf ? <span className="num block text-ink-3">Fixture snapshot: {new Date(asOf * 1000).toUTCString().replace(' GMT', ' UTC')}</span> : null}
         </div>
-      ) : null}
+      ) : (
+        <LiveNetworkCard />
+      )}
     </section>
+  );
+}
+
+function LiveNetworkCard() {
+  const health = useHealth();
+  const label = healthLabel(health);
+  const dot = { up: 'bg-up', warn: 'bg-warn', down: 'bg-down', neutral: 'bg-ink-3' }[label.tone];
+  return (
+    <div className="panel max-w-md px-4 py-3 text-[13px] text-ink-2">
+      <div className="mb-1 flex items-center gap-2 text-[13.5px] text-ink">
+        <span className={`h-2 w-2 rounded-full ${dot}`} aria-hidden />
+        {NETWORK.name}: {label.text}
+      </div>
+      <p>{label.detail}</p>
+      <p className="mt-1 text-ink-3">Launching opens when the CANOPY launch factory is deployed on Elysium.</p>
+    </div>
   );
 }
 
@@ -482,7 +511,7 @@ function SideSummary() {
     <>
       <div className="panel p-4">
         <h2 className="text-[15px] font-semibold">Your rewards</h2>
-        <p className="mt-0.5 text-[12.5px] text-ink-3">{MODE === 'demo' ? 'Demo wallet' : 'Connected wallet'}</p>
+        <p className="mt-0.5 text-[12.5px] text-ink-3">{MODE === 'demo' ? 'Demo wallet' : 'Rewards start with the first market'}</p>
         <div className="num mt-3 text-[26px] font-medium tracking-[-0.01em]">{fmtAmount(claimable, 18, 4)} HYPE</div>
         <p className="text-[13px] text-ink-2">claimable across {positions.filter((p) => p.rewardsClaimable > 0n).length} markets</p>
         <Link href="/rewards" className="btn btn-glass mt-3 w-full">
@@ -495,6 +524,7 @@ function SideSummary() {
       </div>
       <div className="panel p-4">
         <h2 className="text-[15px] font-semibold">Newest launches</h2>
+        {newest.length === 0 ? <p className="mt-2 text-[13.5px] text-ink-2">No launches yet.</p> : null}
         <ul className="mt-2 divide-y divide-white/6">
           {newest.map((t) => (
             <li key={t.address}>

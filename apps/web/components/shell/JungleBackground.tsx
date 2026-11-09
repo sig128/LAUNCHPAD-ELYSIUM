@@ -15,10 +15,11 @@ interface BgState {
   allowed: boolean;
   blockedReason: string | null;
   failed: boolean;
+  mobile: boolean;
   setFailed: (f: boolean) => void;
 }
 
-const BgContext = createContext<BgState>({ allowed: false, blockedReason: null, failed: false, setFailed: () => undefined });
+const BgContext = createContext<BgState>({ allowed: false, blockedReason: null, failed: false, mobile: false, setFailed: () => undefined });
 
 export function BackgroundProvider({ children }: { children: ReactNode }) {
   const { settings, ready } = useSettings();
@@ -47,12 +48,12 @@ export function BackgroundProvider({ children }: { children: ReactNode }) {
         ? 'small screens (turn it on in Settings)'
         : null;
   const allowed = ready && env.known && !failed && blockedReason === null;
-  return <BgContext.Provider value={{ allowed, blockedReason, failed, setFailed }}>{children}</BgContext.Provider>;
+  return <BgContext.Provider value={{ allowed, blockedReason, failed, mobile: env.mobile, setFailed }}>{children}</BgContext.Provider>;
 }
 
 export function JungleBackground() {
   const { settings } = useSettings();
-  const { allowed, setFailed } = useContext(BgContext);
+  const { allowed, setFailed, mobile } = useContext(BgContext);
   const video = useRef<HTMLVideoElement>(null);
   const playing = allowed && settings.videoEnabled;
 
@@ -89,6 +90,7 @@ export function JungleBackground() {
       <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${MEDIA.poster})` }} />
       {allowed ? (
         <video
+          key={mobile ? 'mobile' : 'desktop'}
           ref={video}
           className="absolute inset-0 h-full w-full object-cover"
           muted
@@ -100,7 +102,7 @@ export function JungleBackground() {
           disablePictureInPicture
           onError={() => setFailed(true)}
         >
-          <source src={MEDIA.webm} type="video/webm" />
+          {mobile ? <source src={MEDIA.mobileMp4} type="video/mp4" /> : <source src={MEDIA.webm} type="video/webm" />}
           <source src={MEDIA.mp4} type="video/mp4" onError={() => setFailed(true)} />
         </video>
       ) : null}

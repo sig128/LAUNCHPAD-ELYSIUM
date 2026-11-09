@@ -6,6 +6,7 @@ import { dailySeries, fmtAmount, fmtCompact, METRICS, NETWORKS, platformStats, S
 import { MODE, NETWORK, RPC_URL } from '@/lib/config';
 import { useData } from '@/lib/data';
 import { DEFAULT_COLUMNS, useSettings } from '@/lib/settings';
+import { healthLabel, useHealth } from '@/lib/health';
 import { Address, KeyValue, Pill, Stat, Unavailable } from '@/components/ui/primitives';
 import { FeeBar } from '@/components/discover/DiscoverPage';
 
@@ -99,6 +100,16 @@ export function AnalyticsView() {
 }
 
 export function ContractsView() {
+  const health = useHealth();
+  const hl = healthLabel(health);
+  const entryStatus = (netKey: string, address: string, fallback: keyof typeof STATUS_LABEL) => {
+    if (netKey === NETWORK.key && health.state === 'ok') {
+      const c = health.code[address];
+      if (c === 'present') return <Pill tone="up">Code present on chain {health.chainId}</Pill>;
+      if (c === 'missing') return <Pill tone="down">No contract code here</Pill>;
+    }
+    return <Pill tone={fallback === 'rpc-verified' || fallback === 'own-verified' ? 'up' : 'neutral'}>{STATUS_LABEL[fallback]}</Pill>;
+  };
   return (
     <div className="space-y-4">
       <section className="panel p-4 sm:p-6">
@@ -113,8 +124,9 @@ export function ContractsView() {
             Target: {NETWORK.name}, chain {NETWORK.chainId} ({STATUS_LABEL[NETWORK.chainIdStatus]})
           </Pill>
           <Pill tone={RPC_URL ? 'neutral' : 'warn'}>{RPC_URL ? 'RPC configured' : `RPC not configured (${NETWORK.rpcEnvVar})`}</Pill>
-          <Pill tone="warn">Startup checks: not run</Pill>
+          <Pill tone={hl.tone === 'up' ? 'up' : hl.tone === 'down' ? 'down' : 'warn'}>Startup check: {hl.text}</Pill>
         </div>
+        <p className="mt-3 text-[13px] text-ink-2">{hl.detail}</p>
       </section>
       {Object.values(NETWORKS).map((net) => (
         <section key={net.key} className="panel p-4 sm:p-5">
@@ -141,9 +153,7 @@ export function ContractsView() {
                       <td className="py-2 pr-3">
                         <Address value={e.address} label={`${e.name} address`} full />
                       </td>
-                      <td className="py-2 pr-3">
-                        <Pill tone={e.status === 'rpc-verified' || e.status === 'own-verified' ? 'up' : 'neutral'}>{STATUS_LABEL[e.status]}</Pill>
-                      </td>
+                      <td className="py-2 pr-3">{entryStatus(net.key, e.address, e.status)}</td>
                       <td className="py-2 text-[12.5px]">
                         <a href={e.sourceUrl} target="_blank" rel="noreferrer noopener" className="text-ink-2 underline decoration-white/20 underline-offset-4 hover:text-ink">
                           Source, checked {e.checkedAt}

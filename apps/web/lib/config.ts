@@ -18,6 +18,8 @@ export const MEDIA = {
   webm: process.env.NEXT_PUBLIC_BG_WEBM || '/media/jungle.webm',
   mp4: process.env.NEXT_PUBLIC_BG_MP4 || '/media/jungle.mp4',
   poster: process.env.NEXT_PUBLIC_BG_POSTER || '/media/jungle-poster.webp',
+  /** Lighter 720p encode used on phones. */
+  mobileMp4: process.env.NEXT_PUBLIC_BG_MOBILE_MP4 || '/media/jungle-mobile.mp4',
   /** The supplied footage is already slowed to half speed, so natural 1x is the default. */
   playbackRate: Number(process.env.NEXT_PUBLIC_BG_PLAYBACK_RATE || '1'),
 };
