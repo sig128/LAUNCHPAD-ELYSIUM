@@ -60,7 +60,8 @@ export function JungleBackground() {
   useEffect(() => {
     const v = video.current;
     if (!v) return;
-    const rate = Math.min(2, Math.max(0.25, settings.playbackRate || 1));
+    const wanted = settings.playbackRate ?? MEDIA.playbackRate;
+    const rate = Number.isFinite(wanted) && wanted > 0 ? Math.min(2, Math.max(0.25, wanted)) : 1;
     v.playbackRate = rate;
     v.defaultPlaybackRate = rate;
   }, [settings.playbackRate, playing]);

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMemo } from 'react';
 import { dailySeries, fmtAmount, fmtCompact, METRICS, NETWORKS, platformStats, STATUS_LABEL, TRENDING_FORMULA } from '@canopy/sdk';
-import { MODE, NETWORK, RPC_URL } from '@/lib/config';
+import { MEDIA, MODE, NETWORK, RPC_URL } from '@/lib/config';
 import { useData } from '@/lib/data';
 import { DEFAULT_COLUMNS, useSettings } from '@/lib/settings';
 import { healthLabel, useHealth } from '@/lib/health';
@@ -332,18 +332,25 @@ export function SettingsView() {
         <label className="block">
           <span className="mb-1.5 flex justify-between text-[13.5px]">
             <span>Playback speed</span>
-            <span className="num text-ink-2">{settings.playbackRate.toFixed(2)}×</span>
+            <span className="num text-ink-2">{(settings.playbackRate ?? MEDIA.playbackRate).toFixed(2)}×</span>
           </span>
           <input
             type="range"
             min={0.5}
             max={1.5}
             step={0.05}
-            value={settings.playbackRate}
+            value={settings.playbackRate ?? MEDIA.playbackRate}
             onChange={(e) => update({ playbackRate: Number(e.target.value) })}
             className="w-full accent-[#c8f580]"
           />
-          <span className="mt-1 block text-[12.5px] text-ink-3">Default 0.75×. The footage is already slowed to half speed, so much lower values can look less smooth.</span>
+          <span className="mt-1 flex items-center justify-between gap-3 text-[12.5px] text-ink-3">
+            <span>Default {MEDIA.playbackRate}×. The footage is already slowed to half speed; below 1× it starts to stutter.</span>
+            {settings.playbackRate !== null ? (
+              <button type="button" className="chip h-7 shrink-0 px-2.5 text-[12.5px]" onClick={() => update({ playbackRate: null })}>
+                Reset
+              </button>
+            ) : null}
+          </span>
         </label>
         <Toggle label="Reduce transparency (solid panels, no blur)" checked={settings.reducedTransparency} onChange={(v) => update({ reducedTransparency: v })} />
         <p className="text-[12.5px] text-ink-3">The video also stays off when your system asks for reduced motion or data saving.</p>

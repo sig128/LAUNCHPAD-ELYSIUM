@@ -1,14 +1,14 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { MEDIA } from './config';
 
 export interface Settings {
   quickBuy: string[];
   slippageBps: number;
   videoEnabled: boolean;
   videoOnMobile: boolean;
-  playbackRate: number;
+  /** null follows the site default (MEDIA.playbackRate); a number is the viewer's own choice. */
+  playbackRate: number | null;
   reducedTransparency: boolean;
   columns: Record<string, boolean>;
   watchlist: string[];
@@ -29,13 +29,13 @@ export const DEFAULT_SETTINGS: Settings = {
   slippageBps: 100,
   videoEnabled: true,
   videoOnMobile: true,
-  playbackRate: Number.isFinite(MEDIA.playbackRate) && MEDIA.playbackRate > 0 ? MEDIA.playbackRate : 1,
+  playbackRate: null,
   reducedTransparency: false,
   columns: DEFAULT_COLUMNS,
   watchlist: [],
 };
 
-const KEY = 'canopy:settings:v2';
+const KEY = 'canopy:settings:v3';
 
 interface Ctx {
   settings: Settings;

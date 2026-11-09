@@ -21,8 +21,12 @@ export const MEDIA = {
   poster: process.env.NEXT_PUBLIC_BG_POSTER || '/media/jungle-poster.webp',
   /** Lighter 720p encode used on phones. */
   mobileMp4: process.env.NEXT_PUBLIC_BG_MOBILE_MP4 || '/media/jungle-mobile.mp4',
-  /** The footage is already slowed to half speed; the owner asked for slower still, so 0.75x is the default. */
-  playbackRate: Number(process.env.NEXT_PUBLIC_BG_PLAYBACK_RATE || '0.75'),
+  /**
+   * The file is already slowed to half speed with motion-interpolated frames, so 1x is smooth.
+   * Rates below 1 make the browser hold frames longer (0.75x shows ~22 fps) and visibly stutter;
+   * to go slower, render a new interpolated file instead of lowering this.
+   */
+  playbackRate: Number(process.env.NEXT_PUBLIC_BG_PLAYBACK_RATE || '1'),
 };
 
 export type AppMode = 'demo' | 'local' | 'live';
