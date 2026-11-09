@@ -115,6 +115,17 @@ export const IconWallet = (p: P) => (
     <path d="M16 13.5h.01" />
   </svg>
 );
+export const IconSwap = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M7 7.5h11.5l-3-3M17 16.5H5.5l3 3" />
+  </svg>
+);
+export const IconLock = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="5" y="10.5" width="14" height="9.5" rx="2.5" />
+    <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
+  </svg>
+);
 export const IconInfo = (p: P) => (
   <svg {...base(p)}>
     <circle cx="12" cy="12" r="8.5" />

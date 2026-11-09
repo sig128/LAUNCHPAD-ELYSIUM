@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { DocsView } from '@/components/views/InfoViews';
+import { HowItWorks } from '@/components/views/HowItWorks';
 
 export const metadata: Metadata = { title: 'How it works' };
 
 export default function Page() {
-  return <DocsView />;
+  return <HowItWorks />;
 }

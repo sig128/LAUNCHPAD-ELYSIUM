@@ -89,6 +89,11 @@ body {
   .panel-dense {
     background: var(--glass-dense);
   }
+  /* Navigation chrome sits over scrolling content, so it needs more body than a content panel. */
+  .panel-chrome {
+    --glass: rgb(8 23 17 / 0.86);
+    --blur: blur(24px) saturate(1.2);
+  }
   .inset {
     background: rgb(255 255 255 / 0.035);
     border: 1px solid rgb(255 255 255 / 0.07);
@@ -166,7 +171,8 @@ body {
   }
   .chip[aria-pressed="true"],
   .chip[aria-selected="true"],
-  .chip[aria-current="page"] {
+  .chip[aria-current="page"],
+  .chip[aria-current="true"] {
     color: var(--color-ink);
     background: rgb(255 255 255 / 0.12);
     box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
@@ -213,16 +219,56 @@ body {
 
 /* Reduced transparency: opaque surfaces, no blur. */
 @media (prefers-reduced-transparency: reduce) {
-  :root {
+  :root,
+  .panel-chrome {
     --glass: var(--glass-solid);
     --glass-dense: var(--glass-solid);
     --blur: none;
   }
 }
-html[data-transparency="reduced"] {
+html[data-transparency="reduced"],
+html[data-transparency="reduced"] .panel-chrome {
   --glass: var(--glass-solid);
   --glass-dense: var(--glass-solid);
   --blur: none;
+}
+
+/* Toggle switches */
+input[type="checkbox"][role="switch"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.14);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+  cursor: pointer;
+  transition: background-color 180ms var(--ease-soft);
+}
+input[type="checkbox"][role="switch"]::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #f1f5ef;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), background-color 180ms ease;
+}
+input[type="checkbox"][role="switch"]:checked {
+  background: var(--color-lime);
+}
+input[type="checkbox"][role="switch"]:checked::after {
+  transform: translateX(18px);
+  background: #10200a;
+}
+input[type="checkbox"][role="switch"]:focus-visible {
+  outline: 2px solid var(--color-lime);
+  outline-offset: 3px;
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :root {

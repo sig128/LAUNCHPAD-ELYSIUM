@@ -2,13 +2,12 @@
 
 import Link from 'next/link';
 import { useMemo } from 'react';
-import { dailySeries, fmtAmount, fmtCompact, METRICS, NETWORKS, platformStats, STATUS_LABEL, TRENDING_FORMULA } from '@canopy/sdk';
+import { dailySeries, fmtAmount, fmtCompact, NETWORKS, platformStats, STATUS_LABEL } from '@canopy/sdk';
 import { MEDIA, MODE, NETWORK, RPC_URL } from '@/lib/config';
 import { useData } from '@/lib/data';
 import { DEFAULT_COLUMNS, useSettings } from '@/lib/settings';
 import { healthLabel, useHealth } from '@/lib/health';
 import { Address, KeyValue, Pill, Stat, Unavailable } from '@/components/ui/primitives';
-import { FeeBar } from '@/components/discover/DiscoverPage';
 
 export function AnalyticsView() {
   const { ds, unavailableReason } = useData();
@@ -173,117 +172,6 @@ export function ContractsView() {
           </p>
         </section>
       ))}
-    </div>
-  );
-}
-
-const PERMISSIONS: [string, string, string][] = [
-  ['Creator', 'Claim their 10% fee share; permanently surrender it to holders', 'Mint, freeze, blacklist, tax transfers, change fees, touch liquidity'],
-  ['Holder', 'Claim earned rewards at any time, including after selling', 'Nothing beyond their own balance'],
-  ['Protocol treasury', 'Claim the 10% protocol share; pause new launches', 'Seize funds, rewrite balances, change existing splits, withdraw locked seed liquidity, block sells or claims'],
-  ['Keeper (future)', 'Trigger eligible reserve actions within published limits', 'Choose recipients or routes, exceed per-period spend'],
-  ['Anyone', 'Trade, launch, read every value', 'Initialize pools with the CANOPY hook outside the factory'],
-];
-
-export function DocsView() {
-  return (
-    <div className="space-y-4">
-      <section className="panel p-4 sm:p-6">
-        <h1 className="display text-[34px] leading-tight sm:text-[40px]">How it works</h1>
-        <p className="mt-2 max-w-prose text-[15px] text-ink-2">
-          Launch a market, trade with clear execution costs, earn a published share of collected fees, and inspect the liquidity trading builds.
-          Nothing here promises returns, income or a price floor.
-        </p>
-      </section>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="panel p-4 sm:p-5">
-          <h2 className="text-[16px] font-semibold">Fees</h2>
-          <p className="mt-2 text-[14px] leading-relaxed text-ink-2">
-            One fee of 1.00% on the HYPE side of each trade, charged by the pool’s hook. Buys pay it from the HYPE you send; sells pay it from the
-            HYPE the pool returns. The pool’s LP fee is 0%, so no second fee is stacked on top, and there is no tax on token transfers. Fees round
-            down; the leftover wei goes to holders so the parts always sum exactly.
-          </p>
-          <FeeBar />
-          <p className="mt-3 text-[13px] text-ink-3">
-            Example only, not live revenue: 1,000,000 HYPE of daily volume would collect 10,000 HYPE in fees, 6,000 of it for holders. Real amounts
-            depend on fees actually collected.
-          </p>
-        </section>
-        <section className="panel p-4 sm:p-5">
-          <h2 className="text-[16px] font-semibold">Holder reward accounting</h2>
-          <ul className="mt-2 space-y-2 text-[14px] leading-relaxed text-ink-2">
-            <li>Each fee arrival is merged with the unreleased balance, and the total releases evenly over the next 3,600 seconds.</li>
-            <li>index += rate × elapsed × 10¹⁸ ÷ eligible supply. Before any balance change: earned += balance × (index − paid) ÷ 10³⁶. Constant cost per transfer, no loops, no external calls.</li>
-            <li>Release pauses while eligible supply is zero. Divisions round down, so total claims never exceed the amount released.</li>
-            <li>Excluded: pool inventory, seed locker, fee vault, reserve sink, burn address. Contracts and smart wallets earn normally.</li>
-          </ul>
-        </section>
-        <section className="panel p-4 sm:p-5">
-          <h2 className="text-[16px] font-semibold">Launch and liquidity</h2>
-          <p className="mt-2 text-[14px] leading-relaxed text-ink-2">
-            Supply is fixed at 1,000,000,000 with 18 decimals, minted once. The launch transaction creates the token, initializes a native HYPE pool
-            at the opening price, and places the whole supply in one single-sided position from that price upward. The position is owned by a locker
-            with no withdrawal function. Liquidity starts as token inventory only; no HYPE backs it until people buy. There is no migration and no
-            graduation transaction. Matured is a status label.
-          </p>
-        </section>
-        <section className="panel p-4 sm:p-5">
-          <h2 className="text-[16px] font-semibold">Discovery ranking</h2>
-          <p className="mt-2 text-[14px] leading-relaxed text-ink-2">{TRENDING_FORMULA}</p>
-        </section>
-      </div>
-      <section className="panel p-4 sm:p-5">
-        <h2 className="text-[16px] font-semibold">Permissions</h2>
-        <div className="scroll-x mt-2">
-          <table className="w-full min-w-[640px] text-[13.5px]">
-            <thead className="text-left text-[12.5px] text-ink-3">
-              <tr>
-                <th className="py-2 pr-3 font-normal">Role</th>
-                <th className="py-2 pr-3 font-normal">Can</th>
-                <th className="py-2 font-normal">Cannot</th>
-              </tr>
-            </thead>
-            <tbody>
-              {PERMISSIONS.map(([r, c, n]) => (
-                <tr key={r} className="border-t border-white/6 align-top">
-                  <td className="py-2.5 pr-3 font-medium">{r}</td>
-                  <td className="py-2.5 pr-3 text-ink-2">{c}</td>
-                  <td className="py-2.5 text-ink-2">{n}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-      <section id="metrics" className="panel scroll-mt-24 p-4 sm:p-5">
-        <h2 className="text-[16px] font-semibold">Metric dictionary</h2>
-        <div className="scroll-x mt-2">
-          <table className="w-full min-w-[900px] text-[13px]">
-            <thead className="text-left text-[12.5px] text-ink-3">
-              <tr>
-                <th className="py-2 pr-3 font-normal">Metric</th>
-                <th className="py-2 pr-3 font-normal">Scope</th>
-                <th className="py-2 pr-3 font-normal">Unit</th>
-                <th className="py-2 pr-3 font-normal">Formula</th>
-                <th className="py-2 pr-3 font-normal">Exclusions</th>
-                <th className="py-2 font-normal">Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              {METRICS.map((m) => (
-                <tr key={m.id} className="border-t border-white/6 align-top">
-                  <td className="py-2 pr-3 font-medium">{m.label}</td>
-                  <td className="py-2 pr-3 text-ink-2">{m.scope}</td>
-                  <td className="py-2 pr-3 text-ink-2">{m.unit}</td>
-                  <td className="py-2 pr-3 text-ink-2">{m.formula}</td>
-                  <td className="py-2 pr-3 text-ink-3">{m.exclusions ?? ''}</td>
-                  <td className="py-2 text-ink-3">{m.source}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
     </div>
   );
 }
