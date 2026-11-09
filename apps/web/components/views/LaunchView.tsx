@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { E18, fmtAmount, fmtBps, fmtCompact, fmtPrice, initialCurve, PAIR_ASSETS, parseAmount, quoteBuyExactIn, splitFee, spotPriceX18, TOTAL_SUPPLY } from '@canopy/sdk';
 import { writeBlockReason } from '@/lib/config';
 import { KeyValue, TokenArt } from '@/components/ui/primitives';
+import { IconLeaf } from '@/components/ui/Icons';
 
 function safeHttpsUrl(v: string): string | null {
   if (!v.trim()) return null;
@@ -26,7 +27,7 @@ export function LaunchView() {
   const [fdvInput, setFdvInput] = useState('3000');
   const [buyInput, setBuyInput] = useState('');
   const [surrender, setSurrender] = useState(false);
-  const [pairId, setPairId] = useState('hype');
+  const [pairId, setPairId] = useState('canopy');
   const pair = PAIR_ASSETS.find((a) => a.id === pairId) ?? PAIR_ASSETS[0];
 
   const fdv = parseAmount(fdvInput);
@@ -80,12 +81,12 @@ export function LaunchView() {
         <fieldset className="mt-6">
           <legend className="mb-1 text-[15px] font-semibold">Pair with</legend>
           <p className="mb-3 max-w-prose text-[13.5px] text-ink-2">
-            Your market trades against this asset, and its 1% fee, holder rewards and creator fees are paid in it. It can’t be changed after
-            launch.
+            Every coin trades against CANOPY, the platform’s main coin, and its 1% fee, holder rewards and creator fees are paid in CANOPY.
+            Traders can still pay with HYPE: it is swapped through CANOPY in the same transaction. Launching is free apart from gas.
           </p>
           <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Pair asset">
             {PAIR_ASSETS.map((a) => {
-              const available = a.status === 'available';
+              const available = a.status !== 'not-on-elysium';
               const selected = pairId === a.id;
               return (
                 <button
@@ -102,10 +103,10 @@ export function LaunchView() {
                 >
                   <span
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[12px] font-semibold ${
-                      a.kind === 'native' ? 'bg-lime/15 text-lime' : 'bg-white/8 text-ink'
+                      a.kind === 'main' ? 'bg-lime/15 text-lime' : 'bg-white/8 text-ink'
                     }`}
                   >
-                    {a.symbol.slice(0, 4)}
+                    {a.kind === 'main' ? <IconLeaf size={17} /> : a.symbol.slice(0, 4)}
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate text-[14px] text-ink">
@@ -113,7 +114,7 @@ export function LaunchView() {
                       {a.issuer ? <span className="text-ink-3"> by {a.issuer}</span> : null}
                     </span>
                     <span className={`block text-[12px] ${available ? 'text-ink-3' : 'text-warn'}`}>
-                      {available ? a.name : 'Not on Elysium yet'}
+                      {a.status === 'not-on-elysium' ? 'Not on Elysium yet' : a.status === 'not-launched' ? `${a.name}, launching soon` : a.name}
                     </span>
                   </span>
                 </button>
@@ -121,8 +122,9 @@ export function LaunchView() {
             })}
           </div>
           <p className="mt-2 text-[12.5px] text-ink-3">
-            Stock pairs use tokenized stocks, which are restricted in some countries, including the US and UK. They open once a stock token is live on
-            Elysium and approved.
+            Buying with HYPE goes through two markets (HYPE to CANOPY, then CANOPY to your coin), so it pays the 1% fee twice: once to CANOPY holders,
+            once to your holders. Stock pairs are restricted in some countries, including the US and UK, and open once a stock token is live on Elysium.
+
           </p>
         </fieldset>
 
@@ -143,7 +145,7 @@ export function LaunchView() {
             <span>
               <span className="block text-[14.5px] text-ink">Give my 10% creator share to holders permanently</span>
               <span className="block text-[13px] text-ink-2">
-                Holders then receive 70% of every fee. This cannot be undone. You can also do it later from Creator tools.
+                Holders then receive 90% of every fee. This cannot be undone. You can also do it later from Creator tools.
               </span>
             </span>
           </label>
@@ -192,15 +194,14 @@ export function LaunchView() {
                   : 'None',
               ],
               ['Seed liquidity', 'Whole supply, locked forever'],
-              ['Holder share of fees', surrender ? '70%' : '60%'],
+              ['Holder share of fees', surrender ? '90%' : '80%'],
               ['Creator share of fees', surrender ? '0%' : '10%'],
             ]}
           />
           {preview ? (
             <div className="inset p-3.5 text-[13px] text-ink-2">
               <div className="mb-1 text-ink">On a 1 {pair.symbol} trade the fee is 0.01 {pair.symbol}:</div>
-              holders {fmtAmount(preview.example.holders, 18, 4)}, reserve {fmtAmount(preview.example.reserve, 18, 4)}, creator{' '}
-              {fmtAmount(preview.example.creator, 18, 4)}, liquidity growth {fmtAmount(preview.example.liquidity, 18, 4)}, protocol{' '}
+              holders {fmtAmount(preview.example.holders, 18, 4)}, creator {fmtAmount(preview.example.creator, 18, 4)}, protocol{' '}
               {fmtAmount(preview.example.protocol, 18, 4)}.
             </div>
           ) : null}

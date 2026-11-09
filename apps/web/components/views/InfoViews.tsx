@@ -34,13 +34,13 @@ export function AnalyticsView() {
           <Stat label="Swaps, lifetime" value={s.swaps.toLocaleString('en-US')} />
           <Stat label="Trader addresses, 24h" value={s.activeTraders24h} hint="Unique addresses, not people" />
           <Stat label="New trader addresses, 24h" value={s.newTraders24h} />
-          <Stat label="Volume, 7d" value={`${fmtCompact(s.volume['7d'])} HYPE`} />
-          <Stat label="Volume, lifetime" value={`${fmtCompact(s.volume.all)} HYPE`} />
+          <Stat label="Volume, 7d" value={`${fmtCompact(s.volume['7d'])} CANOPY`} />
+          <Stat label="Volume, lifetime" value={`${fmtCompact(s.volume.all)} CANOPY`} />
         </div>
       </section>
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="panel p-4">
-          <h2 className="text-[15px] font-semibold">Daily volume, last 30 days (HYPE)</h2>
+          <h2 className="text-[15px] font-semibold">Daily volume, last 30 days (CANOPY)</h2>
           <svg viewBox="0 0 300 120" className="mt-3 h-40 w-full" role="img" aria-label="Daily volume bar chart; table below">
             {days.map((d, i) => {
               const h = (d.volume / max) * 110;
@@ -54,7 +54,7 @@ export function AnalyticsView() {
                 {days.map((d) => (
                   <tr key={d.time} className="border-t border-white/6">
                     <td className="py-1">{new Date(d.time * 1000).toISOString().slice(0, 10)}</td>
-                    <td className="py-1 text-right">{d.volume.toFixed(2)} HYPE</td>
+                    <td className="py-1 text-right">{d.volume.toFixed(2)} CANOPY</td>
                     <td className="py-1 text-right">{d.launches} launches</td>
                   </tr>
                 ))}
@@ -66,19 +66,17 @@ export function AnalyticsView() {
           <h2 className="text-[15px] font-semibold">Fees by destination, lifetime</h2>
           <KeyValue
             rows={[
-              ['Gross fees collected', `${fmtAmount(s.fees.fee, 18, 3)} HYPE`],
-              ['Holder allocation', `${fmtAmount(s.fees.holders, 18, 3)} HYPE`],
-              ['Released to holders', `${fmtAmount(s.rewardsReleased, 18, 3)} HYPE`],
-              ['Claimed by holders', `${fmtAmount(s.rewardsClaimed, 18, 3)} HYPE`],
-              ['Outstanding holder liability', `${fmtAmount(s.holderLiabilityOutstanding, 18, 3)} HYPE`],
-              ['Creator fees', `${fmtAmount(s.fees.creator, 18, 3)} HYPE`],
-              ['Buy-order reserves funded', `${fmtAmount(s.fees.reserve, 18, 3)} HYPE`],
-              ['Liquidity-growth budgets funded', `${fmtAmount(s.fees.liquidity, 18, 3)} HYPE`],
-              ['Protocol operating income', `${fmtAmount(s.fees.protocol, 18, 3)} HYPE`],
+              ['Gross fees collected', `${fmtAmount(s.fees.fee, 18, 3)} CANOPY`],
+              ['Holder allocation', `${fmtAmount(s.fees.holders, 18, 3)} CANOPY`],
+              ['Released to holders', `${fmtAmount(s.rewardsReleased, 18, 3)} CANOPY`],
+              ['Claimed by holders', `${fmtAmount(s.rewardsClaimed, 18, 3)} CANOPY`],
+              ['Outstanding holder liability', `${fmtAmount(s.holderLiabilityOutstanding, 18, 3)} CANOPY`],
+              ['Creator fees', `${fmtAmount(s.fees.creator, 18, 3)} CANOPY`],
+              ['Protocol operating income', `${fmtAmount(s.fees.protocol, 18, 3)} CANOPY`],
               ['Wallets with rewards', s.rewardedWallets],
             ]}
           />
-          <p className="mt-2 text-[12.5px] text-ink-3">Only the protocol line is protocol revenue. Reserve and liquidity-growth funds are held per token.</p>
+          <p className="mt-2 text-[12.5px] text-ink-3">Only the protocol line is protocol revenue.</p>
         </section>
       </div>
       <section className="panel p-4">
@@ -89,7 +87,7 @@ export function AnalyticsView() {
               <Link href={`/token/${t.address}`} className="min-w-0 truncate font-sans hover:underline">
                 {t.name}
               </Link>
-              <span className="text-ink-2">{fmtCompact(t.stats['7d'].volume)} HYPE</span>
+              <span className="text-ink-2">{fmtCompact(t.stats['7d'].volume)} CANOPY</span>
             </li>
           ))}
         </ul>
@@ -187,7 +185,7 @@ export function SettingsView() {
       <section className="panel space-y-4 p-4 sm:p-5">
         <h2 className="text-[16px] font-semibold">Trading</h2>
         <label className="block">
-          <span className="mb-1.5 block text-[13.5px]">Quick buy amounts (HYPE, comma separated)</span>
+          <span className="mb-1.5 block text-[13.5px]">Quick buy amounts (CANOPY, comma separated)</span>
           <input
             className="field num"
             defaultValue={settings.quickBuy.join(', ')}

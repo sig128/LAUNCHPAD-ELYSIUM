@@ -23,9 +23,11 @@ import {SeedLiquidityLocker} from "./SeedLiquidityLocker.sol";
 
 /// @title LaunchFactory
 /// @notice Atomic launch: token, pool with the CANOPY hook, locked single-sided seed position and an
-///         optional disclosed creator buy, in one transaction. Each launch picks its pair asset: native
-///         HYPE (address(0)) or an allowlisted ERC-20 such as a bridged stock token. The pair is fixed
-///         for the life of the market; allowlist changes only affect future launches.
+///         optional disclosed creator buy, in one transaction. Launching is free apart from gas.
+///         Each launch picks an allowlisted pair asset. The intended setup pairs every launch with the
+///         main coin (CANOPY), which itself trades against native HYPE and is bridged to Solana with
+///         Wormhole. The pair is fixed for the life of a market; allowlist changes only affect future
+///         launches.
 contract LaunchFactory is IUnlockCallback, ReentrancyGuardTransient {
     using PoolIdLibrary for PoolKey;
     using CurrencyLibrary for Currency;
@@ -43,6 +45,8 @@ contract LaunchFactory is IUnlockCallback, ReentrancyGuardTransient {
     SeedLiquidityLocker public immutable locker;
     address public immutable owner;
     LaunchHook public hook;
+    /// @notice The platform's main coin, launched once against native HYPE. Zero until launched.
+    address public mainCoin;
 
     bool public launchesPaused;
     mapping(address pair => bool) public pairAllowed;
@@ -79,6 +83,8 @@ contract LaunchFactory is IUnlockCallback, ReentrancyGuardTransient {
     error BadValue();
     error Slippage();
     error RefundFailed();
+    error MainCoinExists();
+    error BadSupply();
 
     /// @notice A market went live. Name and symbol are read from the token itself.
     event Launched(
@@ -94,6 +100,8 @@ contract LaunchFactory is IUnlockCallback, ReentrancyGuardTransient {
     /// @notice The locked seed position created for a launch.
     event SeedRange(address indexed token, uint160 sqrtPriceX96, int24 tickLower, int24 tickUpper, uint128 liquidity);
     event PairAllowed(address indexed pair, bool allowed);
+    /// @notice The main coin went live on this chain with `supply` tokens, its share of the global supply.
+    event MainCoinLaunched(address indexed token, uint256 supply, uint256 openingFdv);
     event LaunchesPaused(bool paused);
 
     constructor(IPoolManager poolManager_, FeeVault vault_, SeedLiquidityLocker locker_, address owner_) {
@@ -144,8 +152,8 @@ contract LaunchFactory is IUnlockCallback, ReentrancyGuardTransient {
         if (p.openingFdv < MIN_OPENING_FDV || p.openingFdv > MAX_OPENING_FDV) revert BadOpeningFdv();
         if (p.pair == address(0) ? msg.value != p.creatorBuy : msg.value != 0) revert BadValue();
 
-        token = _deployToken(p);
-        (PoolKey memory key, bool pairIs0) = _createPool(p, token);
+        token = _deployToken(p.name, p.symbol, p.salt, TOTAL_SUPPLY, address(0));
+        (PoolKey memory key, bool pairIs0) = _createPool(p.pair, p.openingFdv, token, TOTAL_SUPPLY - 1);
         vault.registerLaunch(token, Currency.wrap(p.pair), msg.sender, p.surrenderCreatorShare);
         allTokens.push(token);
 
@@ -158,16 +166,44 @@ contract LaunchFactory is IUnlockCallback, ReentrancyGuardTransient {
         emit Launched(token, p.pair, key.toId(), msg.sender, p.openingFdv, p.creatorBuy, creatorTokens, p.surrenderCreatorShare);
     }
 
-    function _createPool(LaunchParams calldata p, address token) private returns (PoolKey memory key, bool pairIs0) {
-        pairIs0 = p.pair < token;
+    /// @notice Launch the main coin on this chain, once, paired with native HYPE. `supply` is this
+    ///         chain's share of the global TOTAL_SUPPLY (for example half, with the other half on Solana).
+    ///         The seed opens at openingFdv / TOTAL_SUPPLY, so it is this chain's slice of one global curve.
+    ///         The owner becomes the bridge admin and can set the Wormhole NTT manager as minter, once.
+    function launchMainCoin(string calldata name, string calldata symbol, uint256 openingFdv, uint256 supply, bool surrenderCreatorShare)
+        external
+        onlyOwner
+        nonReentrant
+        returns (address token)
+    {
+        if (address(hook) == address(0)) revert NotReady();
+        if (mainCoin != address(0)) revert MainCoinExists();
+        if (supply < 2 || supply > TOTAL_SUPPLY) revert BadSupply();
+        if (openingFdv < MIN_OPENING_FDV || openingFdv > MAX_OPENING_FDV) revert BadOpeningFdv();
+        token = _deployToken(name, symbol, bytes32(0), supply, owner);
+        (PoolKey memory key, ) = _createPool(address(0), openingFdv, token, supply - 1);
+        vault.registerLaunch(token, Currency.wrap(address(0)), msg.sender, surrenderCreatorShare);
+        allTokens.push(token);
+        mainCoin = token;
+        pairAllowed[token] = true;
+        emit PairAllowed(token, true);
+        emit Launched(token, address(0), key.toId(), msg.sender, openingFdv, 0, 0, surrenderCreatorShare);
+        emit MainCoinLaunched(token, supply, openingFdv);
+    }
+
+    function _createPool(address pair, uint256 openingFdv, address token, uint256 seedAmount)
+        private
+        returns (PoolKey memory key, bool pairIs0)
+    {
+        pairIs0 = pair < token;
         key = PoolKey({
-            currency0: Currency.wrap(pairIs0 ? p.pair : token),
-            currency1: Currency.wrap(pairIs0 ? token : p.pair),
+            currency0: Currency.wrap(pairIs0 ? pair : token),
+            currency1: Currency.wrap(pairIs0 ? token : pair),
             fee: 0,
             tickSpacing: TICK_SPACING,
             hooks: IHooks(address(hook))
         });
-        (int24 tickLower, int24 tickUpper, uint160 sqrtStart, uint128 liquidity) = seedRange(pairIs0, p.openingFdv);
+        (int24 tickLower, int24 tickUpper, uint160 sqrtStart, uint128 liquidity) = seedRange(pairIs0, openingFdv, seedAmount);
         hook.registerPool(key, token, pairIs0);
         poolManager.initialize(key, sqrtStart);
         locker.lockSeed(key, tickLower, tickUpper, liquidity, token);
@@ -175,7 +211,10 @@ contract LaunchFactory is IUnlockCallback, ReentrancyGuardTransient {
         emit SeedRange(token, sqrtStart, tickLower, tickUpper, liquidity);
     }
 
-    function _deployToken(LaunchParams calldata p) private returns (address) {
+    function _deployToken(string calldata name, string calldata symbol, bytes32 salt, uint256 supply, address bridgeAdmin)
+        private
+        returns (address)
+    {
         address[] memory excluded = new address[](6);
         excluded[0] = address(poolManager);
         excluded[1] = address(locker);
@@ -184,16 +223,16 @@ contract LaunchFactory is IUnlockCallback, ReentrancyGuardTransient {
         excluded[4] = address(hook);
         excluded[5] = BURN;
         return address(
-            new LaunchToken{salt: keccak256(abi.encode(msg.sender, p.salt))}(
-                p.name, p.symbol, TOTAL_SUPPLY, address(locker), address(vault), excluded
+            new LaunchToken{salt: keccak256(abi.encode(msg.sender, salt))}(
+                name, symbol, supply, address(locker), address(vault), bridgeAdmin, excluded
             )
         );
     }
 
-    /// @notice Seed range for a single-sided position holding the whole supply from the opening price upward.
+    /// @notice Seed range for a single-sided position holding `amount` tokens from the opening price upward.
     /// @dev Opening price in pair units per token = openingFdv / TOTAL_SUPPLY (raw units). The tick is
     ///      rounded down to the tick spacing, so the effective opening FDV can differ by under 2%.
-    function seedRange(bool pairIs0, uint256 openingFdv)
+    function seedRange(bool pairIs0, uint256 openingFdv, uint256 amount)
         public
         pure
         returns (int24 tickLower, int24 tickUpper, uint160 sqrtStart, uint128 liquidity)
@@ -203,7 +242,6 @@ contract LaunchFactory is IUnlockCallback, ReentrancyGuardTransient {
         uint256 den = pairIs0 ? openingFdv : TOTAL_SUPPLY;
         uint160 sqrtP = uint160(Math.sqrt(FullMath.mulDiv(num, 1 << 192, den)));
         int24 aligned = _floorToSpacing(TickMath.getTickAtSqrtPrice(sqrtP));
-        uint256 amount = TOTAL_SUPPLY - 1;
         if (pairIs0) {
             // Token is currency1: position sits below the start tick and is all token1.
             tickLower = TickMath.minUsableTick(TICK_SPACING);

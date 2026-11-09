@@ -11,16 +11,14 @@ import {LaunchToken} from "./LaunchToken.sol";
 /// @notice Holds collected fees as ERC-6909 claims on the PoolManager and keeps a separate ledger per launch.
 ///         Every launch is paid only from its own ledger, in its own pair asset (native HYPE or an
 ///         allowlisted ERC-20 such as a bridged stock token).
-/// @dev Split of each fee (policy v1): reserve, creator, liquidity growth and protocol each get
-///      floor(fee * 1000 / 10000); holders get the remainder, so dust goes to holders and parts sum to fee.
-///      If the creator surrendered their share, creator = 0 and that share goes to holders.
+/// @dev Split of each fee (policy v1): creator and protocol each get floor(fee * 1000 / 10000);
+///      holders get the remainder (80%), so dust goes to holders and the parts sum to the fee.
+///      If the creator surrendered their share, creator = 0 and holders get 90%.
 contract FeeVault is IUnlockCallback, ReentrancyGuardTransient {
     using CurrencyLibrary for Currency;
 
     uint256 public constant BPS = 10_000;
-    uint256 public constant RESERVE_BPS = 1_000;
     uint256 public constant CREATOR_BPS = 1_000;
-    uint256 public constant LIQUIDITY_BPS = 1_000;
     uint256 public constant PROTOCOL_BPS = 1_000;
 
     struct Ledger {
@@ -33,8 +31,6 @@ contract FeeVault is IUnlockCallback, ReentrancyGuardTransient {
         uint256 holderPaid;
         uint256 creatorOwed;
         uint256 creatorPaid;
-        uint256 reserve;
-        uint256 liquidityBudget;
         uint256 protocolOwed;
         uint256 protocolPaid;
     }
@@ -54,9 +50,7 @@ contract FeeVault is IUnlockCallback, ReentrancyGuardTransient {
     error AlreadySurrendered();
     error LedgerExceeded();
 
-    event FeeRecorded(
-        address indexed token, uint256 fee, uint256 holders, uint256 reserve, uint256 creator, uint256 liquidity, uint256 protocol
-    );
+    event FeeRecorded(address indexed token, uint256 fee, uint256 holders, uint256 creator, uint256 protocol);
     event LaunchRegistered(address indexed token, Currency pair, address indexed creator, bool creatorSurrendered);
     event HolderRewardsClaimed(address indexed token, address indexed account, address recipient, uint256 amount);
     event CreatorFeesClaimed(address indexed token, address recipient, uint256 amount);
@@ -94,19 +88,15 @@ contract FeeVault is IUnlockCallback, ReentrancyGuardTransient {
         if (msg.sender != hook) revert NotAuthorized();
         Ledger storage l = ledgers[token];
         if (!l.registered) revert UnknownLaunch();
-        uint256 reserve = (fee * RESERVE_BPS) / BPS;
-        uint256 liquidity = (fee * LIQUIDITY_BPS) / BPS;
         uint256 protocol = (fee * PROTOCOL_BPS) / BPS;
         uint256 creator = l.creatorSurrendered ? 0 : (fee * CREATOR_BPS) / BPS;
-        uint256 holders = fee - reserve - liquidity - protocol - creator;
+        uint256 holders = fee - protocol - creator;
         l.feesTotal += fee;
-        l.reserve += reserve;
-        l.liquidityBudget += liquidity;
         l.protocolOwed += protocol;
         l.creatorOwed += creator;
         l.holderFunded += holders;
         if (holders != 0) LaunchToken(token).fundRewards(holders);
-        emit FeeRecorded(token, fee, holders, reserve, creator, liquidity, protocol);
+        emit FeeRecorded(token, fee, holders, creator, protocol);
     }
 
     // ---------------------------------------------------------------- claims
@@ -148,9 +138,6 @@ contract FeeVault is IUnlockCallback, ReentrancyGuardTransient {
         emit ProtocolFeesClaimed(token, recipient, amount);
         _payout(l.pair, recipient, amount);
     }
-
-    // Reserve and liquidity-growth balances accrue per launch and have no withdrawal path in this
-    // version: execution is unavailable until a bounded executor module passes its strategy tests.
 
     // ---------------------------------------------------------------- payout
 

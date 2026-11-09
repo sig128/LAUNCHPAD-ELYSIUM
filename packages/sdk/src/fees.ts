@@ -6,8 +6,8 @@
  *  - Buys (exact input): quoteNotional = the trader's gross quote input. The pool receives gross - fee.
  *  - Sells (exact input): quoteNotional = the pool's gross quote output. The trader receives gross - fee.
  *  - Exact-output swaps are rejected by the hook (ExactOutputUnsupported) and are never quoted.
- *  - Split: reserve, creator, liquidity-growth and protocol are each floor(fee * bps / 10_000).
- *    Holders receive fee minus those four, so all rounding dust goes to holders and the parts
+ *  - Split: creator and protocol are each floor(fee * 1_000 / 10_000), 10% each.
+ *    Holders receive fee minus those two (80%), so all rounding dust goes to holders and the parts
  *    always sum to the collected fee.
  *  - If the creator irrevocably surrendered their share, creator = 0 and that share is added to holders.
  *  - No ERC-20 transfer tax and no LP fee: the v4 pool is created with an LP fee of 0, so the hook fee
@@ -19,9 +19,7 @@ export interface FeePolicy {
   version: 'v1';
   feeBps: bigint;
   holdersBps: bigint;
-  reserveBps: bigint;
   creatorBps: bigint;
-  liquidityBps: bigint;
   protocolBps: bigint;
   lpFeePips: number;
   dustRecipient: 'holders';
@@ -30,10 +28,8 @@ export interface FeePolicy {
 export const POLICY_V1: FeePolicy = {
   version: 'v1',
   feeBps: 100n,
-  holdersBps: 6_000n,
-  reserveBps: 1_000n,
+  holdersBps: 8_000n,
   creatorBps: 1_000n,
-  liquidityBps: 1_000n,
   protocolBps: 1_000n,
   lpFeePips: 0,
   dustRecipient: 'holders',
@@ -42,9 +38,7 @@ export const POLICY_V1: FeePolicy = {
 export interface FeeSplit {
   fee: bigint;
   holders: bigint;
-  reserve: bigint;
   creator: bigint;
-  liquidity: bigint;
   protocol: bigint;
 }
 
@@ -55,23 +49,19 @@ export function feeOn(quoteNotional: bigint, policy: FeePolicy = POLICY_V1): big
 
 export function splitFee(fee: bigint, creatorSurrendered: boolean, policy: FeePolicy = POLICY_V1): FeeSplit {
   if (fee < 0n) throw new RangeError('fee must be non-negative');
-  const reserve = (fee * policy.reserveBps) / BPS;
-  const liquidity = (fee * policy.liquidityBps) / BPS;
   const protocol = (fee * policy.protocolBps) / BPS;
   const creator = creatorSurrendered ? 0n : (fee * policy.creatorBps) / BPS;
-  const holders = fee - reserve - liquidity - protocol - creator;
-  return { fee, holders, reserve, creator, liquidity, protocol };
+  const holders = fee - protocol - creator;
+  return { fee, holders, creator, protocol };
 }
 
 export function addSplits(a: FeeSplit, b: FeeSplit): FeeSplit {
   return {
     fee: a.fee + b.fee,
     holders: a.holders + b.holders,
-    reserve: a.reserve + b.reserve,
     creator: a.creator + b.creator,
-    liquidity: a.liquidity + b.liquidity,
     protocol: a.protocol + b.protocol,
   };
 }
 
-export const ZERO_SPLIT: FeeSplit = { fee: 0n, holders: 0n, reserve: 0n, creator: 0n, liquidity: 0n, protocol: 0n };
+export const ZERO_SPLIT: FeeSplit = { fee: 0n, holders: 0n, creator: 0n, protocol: 0n };

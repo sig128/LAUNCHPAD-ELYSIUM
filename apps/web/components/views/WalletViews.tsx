@@ -37,12 +37,12 @@ export function RewardsView() {
       <section className="panel p-4 sm:p-6">
         <h1 className="display text-[34px] leading-tight sm:text-[40px]">Rewards</h1>
         <p className="mt-2 max-w-prose text-[15px] text-ink-2">
-          Holders earn a share of the fees each market actually collects, in HYPE, in proportion to their balance while fees release.
+          Holders earn a share of the fees each market actually collects, in CANOPY, in proportion to their balance while fees release.
         </p>
         <WalletNote />
         <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Stat label="Claimable now" value={`${fmtAmount(claimable, 18, 6)} HYPE`} />
-          <Stat label="Claimed before" value={`${fmtAmount(claimed, 18, 6)} HYPE`} />
+          <Stat label="Claimable now" value={`${fmtAmount(claimable, 18, 6)} CANOPY`} />
+          <Stat label="Claimed before" value={`${fmtAmount(claimed, 18, 6)} CANOPY`} />
           <Stat label="Markets with rewards" value={withRewards.length} />
           <Stat label="Claim cost" value={MODE === 'demo' ? 'Not estimated in demo' : 'Estimated per batch'} />
         </div>
@@ -76,7 +76,7 @@ export function RewardsView() {
                     </div>
                   </div>
                   <div className="num text-right text-[14px]">
-                    <div>{fmtAmount(p.rewardsClaimable, 18, 6)} HYPE</div>
+                    <div>{fmtAmount(p.rewardsClaimable, 18, 6)} CANOPY</div>
                     <div className="text-[12.5px] text-ink-3">claimed {fmtAmount(p.rewardsClaimed, 18, 6)}</div>
                   </div>
                   <button type="button" className="btn btn-glass h-9" disabled={Boolean(blocked) || p.rewardsClaimable === 0n}>
@@ -109,12 +109,12 @@ export function PortfolioView() {
         <h1 className="display text-[34px] leading-tight sm:text-[40px]">Portfolio</h1>
         <WalletNote />
         <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
-          <Stat label="Marked value" value={`${fmtAmount(mark, 18, 3)} HYPE`} hint="Balance × spot price" />
-          <Stat label="Exit value" value={`${fmtAmount(exit, 18, 3)} HYPE`} hint="Selling every position now, after fees and price impact" />
+          <Stat label="Marked value" value={`${fmtAmount(mark, 18, 3)} CANOPY`} hint="Balance × spot price" />
+          <Stat label="Exit value" value={`${fmtAmount(exit, 18, 3)} CANOPY`} hint="Selling every position now, after fees and price impact" />
           <Stat label="Unrealized" value={<span className={tone(unreal)}>{signed(unreal)}</span>} />
           <Stat label="Realized" value={<span className={tone(real)}>{signed(real)}</span>} />
-          <Stat label="Trading fees paid" value={`${fmtAmount(fees, 18, 4)} HYPE`} />
-          <Stat label="Rewards earned" value={`${fmtAmount(rewards, 18, 4)} HYPE`} hint="Claimed plus claimable" />
+          <Stat label="Trading fees paid" value={`${fmtAmount(fees, 18, 4)} CANOPY`} />
+          <Stat label="Rewards earned" value={`${fmtAmount(rewards, 18, 4)} CANOPY`} hint="Claimed plus claimable" />
         </div>
         <p className="mt-4 text-[12.5px] text-ink-3">
           Cost basis uses FIFO and includes the trading fee. Gas is not included in demo. Tokens received by transfer would show an unknown basis.
@@ -167,7 +167,7 @@ export function PortfolioView() {
                 {t.side === 'buy' ? 'Bought' : 'Sold'} {fmtCompact(t.tokenAmount)} {token.symbol}
               </span>
               <span className="text-ink-2">
-                {fmtAmount(t.quoteSettled, 18, 4)} HYPE, fee {fmtAmount(t.fee, 18, 5)}
+                {fmtAmount(t.quoteSettled, 18, 4)} CANOPY, fee {fmtAmount(t.fee, 18, 5)}
               </span>
               <span className="font-mono text-[12px] text-ink-3">{shortAddr(t.txHash, 8, 4)}</span>
               <span className="text-[12.5px] text-ink-3">{utc(t.timestamp)} UTC</span>
@@ -212,19 +212,19 @@ export function CreatorView() {
               <div className="mt-4 grid gap-5 md:grid-cols-2">
                 <KeyValue
                   rows={[
-                    ['Fees accrued to you', `${fmtAmount(t.fees.creator, 18, 4)} HYPE`],
-                    ['Claimed', `${fmtAmount(t.creatorClaimed, 18, 4)} HYPE`],
-                    ['Owed now', `${fmtAmount(owed, 18, 4)} HYPE`],
+                    ['Fees accrued to you', `${fmtAmount(t.fees.creator, 18, 4)} CANOPY`],
+                    ['Claimed', `${fmtAmount(t.creatorClaimed, 18, 4)} CANOPY`],
+                    ['Owed now', `${fmtAmount(owed, 18, 4)} CANOPY`],
                     ['Fee share', t.creatorSurrenderedAt ? 'Surrendered to holders' : 'Active, 10%'],
                   ]}
                 />
                 <div className="space-y-3">
                   <button type="button" className="btn btn-primary w-full" disabled={Boolean(blocked) || owed === 0n}>
-                    Claim {fmtAmount(owed, 18, 4)} HYPE
+                    Claim {fmtAmount(owed, 18, 4)} CANOPY
                   </button>
                   <div className="inset p-3.5 text-[13px] text-ink-2">
                     <div className="text-[14px] text-ink">Give your share to holders</div>
-                    Future creator fees go to holders, raising their share to 70%. Fees already owed to you stay yours. This is permanent.
+                    Future creator fees go to holders, raising their share to 90%. Fees already owed to you stay yours. This is permanent.
                     <button type="button" className="btn btn-glass mt-3 w-full" disabled={Boolean(blocked) || Boolean(t.creatorSurrenderedAt)}>
                       Surrender creator share
                     </button>

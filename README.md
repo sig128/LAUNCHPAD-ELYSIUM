@@ -37,6 +37,6 @@ Production defaults come from `apps/web/.env.production`: live mode on Elysium m
 - **demo**: deterministic fixtures, always labelled "Demo data", no wallet writes. Every figure is produced by replaying trades through the real fee and reward math, so totals reconcile.
 - **local** and **live**: show explicit "unavailable" states until the contracts and indexer exist. A failed live connection never falls back to demo data.
 
-Each launch picks its pair asset: native HYPE, or an ERC-20 the factory owner allowlists, such as a tokenized stock. Fees and holder rewards are paid in that asset. See the stock-pair checklist in the status file.
+Every launch pairs with CANOPY, the platform's main coin, and launching is free apart from gas. Holders get 80% of each market's 1% fee, paid in the pair. Traders can pay with HYPE: the router swaps HYPE → CANOPY → coin in one transaction. CANOPY is planned as one token on Elysium and Solana joined by Wormhole; see [docs/MAIN-COIN.md](docs/MAIN-COIN.md).
 
 See [docs/STATUS.md](docs/STATUS.md) for exactly what works and what does not yet.

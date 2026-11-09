@@ -15,14 +15,18 @@ import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/Reentrancy
 import {LaunchHook} from "./LaunchHook.sol";
 
 /// @title LaunchRouter
-/// @notice Exact-input buys and sells for CANOPY markets only, with a minimum output and a deadline.
-///         Pays and receives the market's pair asset (native HYPE or an allowlisted ERC-20). Holds no funds
-///         between transactions and never accepts an arbitrary target.
+/// @notice Exact-input swaps across CANOPY markets only, with a minimum output and a deadline.
+///         A path has one or two hops, so a trader can pay native HYPE for a coin paired with the main
+///         coin (HYPE -> CANOPY -> coin) or sell it straight back to HYPE (coin -> CANOPY -> HYPE) in one
+///         transaction. The intermediate amount never leaves the PoolManager. Every hop pays its market's
+///         1% fee. Holds no funds between transactions and never accepts an arbitrary target.
 contract LaunchRouter is IUnlockCallback, ReentrancyGuardTransient {
     using PoolIdLibrary for PoolKey;
     using CurrencyLibrary for Currency;
     using BalanceDeltaLibrary for BalanceDelta;
     using SafeERC20 for IERC20;
+
+    uint256 public constant MAX_HOPS = 2;
 
     IPoolManager public immutable poolManager;
     LaunchHook public immutable hook;
@@ -32,12 +36,17 @@ contract LaunchRouter is IUnlockCallback, ReentrancyGuardTransient {
     error Expired();
     error Slippage();
     error BadValue();
+    error BadPath();
     error RefundFailed();
 
-    struct Job {
+    /// @notice One swap step: `zeroForOne` is true when paying currency0 for currency1.
+    struct Hop {
         PoolKey key;
         bool zeroForOne;
-        bool payNative;
+    }
+
+    struct Job {
+        Hop[] path;
         uint256 amountIn;
         uint256 minOut;
         address payer;
@@ -49,70 +58,115 @@ contract LaunchRouter is IUnlockCallback, ReentrancyGuardTransient {
         hook = hook_;
     }
 
-    /// @notice Spend exactly `amountIn` of the pair asset (1% fee included) for at least `minOut` tokens.
+    /// @notice Spend exactly `amountIn` of the market's pair asset (1% fee included) for at least `minOut` tokens.
     function buy(PoolKey calldata key, uint256 amountIn, uint256 minOut, address recipient, uint256 deadline)
         external
         payable
         nonReentrant
-        returns (uint256 out)
+        returns (uint256)
     {
-        bool pairIs0 = _check(key, deadline);
-        bool native = key.currency0.isAddressZero() && pairIs0;
-        if (native ? msg.value != amountIn : msg.value != 0) revert BadValue();
-        out = _run(Job(key, pairIs0, native, amountIn, minOut, msg.sender, recipient));
+        Hop[] memory path = new Hop[](1);
+        path[0] = Hop(key, _pairIs0(key));
+        return _swap(path, amountIn, minOut, recipient, deadline);
     }
 
     /// @notice Sell exactly `amountIn` tokens for at least `minOut` of the pair asset after the 1% fee.
     function sell(PoolKey calldata key, uint256 amountIn, uint256 minOut, address recipient, uint256 deadline)
         external
         nonReentrant
-        returns (uint256 out)
+        returns (uint256)
     {
-        bool pairIs0 = _check(key, deadline);
-        out = _run(Job(key, !pairIs0, false, amountIn, minOut, msg.sender, recipient));
+        Hop[] memory path = new Hop[](1);
+        path[0] = Hop(key, !_pairIs0(key));
+        return _swap(path, amountIn, minOut, recipient, deadline);
     }
 
-    function _check(PoolKey calldata key, uint256 deadline) private view returns (bool pairIs0) {
+    /// @notice Spend exactly `amountIn` of the first hop's input for at least `minOut` of the last hop's output.
+    ///         Each hop's output currency must be the next hop's input currency.
+    function swapExactIn(Hop[] calldata path, uint256 amountIn, uint256 minOut, address recipient, uint256 deadline)
+        external
+        payable
+        nonReentrant
+        returns (uint256)
+    {
+        return _swap(path, amountIn, minOut, recipient, deadline);
+    }
+
+    function _swap(Hop[] memory path, uint256 amountIn, uint256 minOut, address recipient, uint256 deadline)
+        private
+        returns (uint256)
+    {
         if (block.timestamp > deadline) revert Expired();
+        uint256 n = path.length;
+        if (n == 0 || n > MAX_HOPS) revert BadPath();
+        for (uint256 i; i < n; ++i) {
+            _pairIs0(path[i].key);
+            if (i != 0 && Currency.unwrap(_out(path[i - 1])) != Currency.unwrap(_in(path[i]))) revert BadPath();
+        }
+        bool payNative = _in(path[0]).isAddressZero();
+        if (payNative ? msg.value != amountIn : msg.value != 0) revert BadValue();
+        Job memory job = Job(path, amountIn, minOut, msg.sender, recipient);
+        return abi.decode(poolManager.unlock(abi.encode(job)), (uint256));
+    }
+
+    /// @dev Reverts unless the pool belongs to a CANOPY market; returns whether its pair asset is currency0.
+    function _pairIs0(PoolKey memory key) private view returns (bool pairIs0) {
         if (address(key.hooks) != address(hook)) revert NotCanopyPool();
         bool registered;
         (, pairIs0, registered) = hook.pools(key.toId());
         if (!registered) revert NotCanopyPool();
     }
 
-    function _run(Job memory job) private returns (uint256) {
-        return abi.decode(poolManager.unlock(abi.encode(job)), (uint256));
+    function _in(Hop memory h) private pure returns (Currency) {
+        return h.zeroForOne ? h.key.currency0 : h.key.currency1;
+    }
+
+    function _out(Hop memory h) private pure returns (Currency) {
+        return h.zeroForOne ? h.key.currency1 : h.key.currency0;
     }
 
     function unlockCallback(bytes calldata data) external returns (bytes memory) {
         if (msg.sender != address(poolManager)) revert NotPoolManager();
         Job memory job = abi.decode(data, (Job));
-        BalanceDelta d = poolManager.swap(
-            job.key,
-            SwapParams({
-                zeroForOne: job.zeroForOne,
-                amountSpecified: -int256(job.amountIn),
-                sqrtPriceLimitX96: job.zeroForOne ? TickMath.MIN_SQRT_PRICE + 1 : TickMath.MAX_SQRT_PRICE - 1
-            }),
-            ""
-        );
-        (Currency inCur, Currency outCur) = job.zeroForOne ? (job.key.currency0, job.key.currency1) : (job.key.currency1, job.key.currency0);
-        uint256 pay = uint256(uint128(-(job.zeroForOne ? d.amount0() : d.amount1())));
-        uint256 out = uint256(uint128(job.zeroForOne ? d.amount1() : d.amount0()));
-        if (out < job.minOut) revert Slippage();
 
-        if (job.payNative) {
-            poolManager.settle{value: pay}();
-            if (pay < job.amountIn) {
-                (bool ok,) = job.payer.call{value: job.amountIn - pay}("");
+        uint256 amount = job.amountIn;
+        uint256 paid;
+        uint256 n = job.path.length;
+        for (uint256 i; i < n; ++i) {
+            Hop memory h = job.path[i];
+            BalanceDelta d = poolManager.swap(
+                h.key,
+                SwapParams({
+                    zeroForOne: h.zeroForOne,
+                    amountSpecified: -int256(amount),
+                    sqrtPriceLimitX96: h.zeroForOne ? TickMath.MIN_SQRT_PRICE + 1 : TickMath.MAX_SQRT_PRICE - 1
+                }),
+                ""
+            );
+            uint256 consumed = uint256(uint128(-(h.zeroForOne ? d.amount0() : d.amount1())));
+            if (i == 0) {
+                paid = consumed;
+            } else if (consumed < amount) {
+                // The pool ran out before using the whole intermediate amount: hand the rest to the recipient.
+                poolManager.take(_in(h), job.recipient, amount - consumed);
+            }
+            amount = uint256(uint128(h.zeroForOne ? d.amount1() : d.amount0()));
+        }
+        if (amount < job.minOut) revert Slippage();
+
+        Currency inCur = _in(job.path[0]);
+        if (inCur.isAddressZero()) {
+            poolManager.settle{value: paid}();
+            if (paid < job.amountIn) {
+                (bool ok,) = job.payer.call{value: job.amountIn - paid}("");
                 if (!ok) revert RefundFailed();
             }
         } else {
             poolManager.sync(inCur);
-            IERC20(Currency.unwrap(inCur)).safeTransferFrom(job.payer, address(poolManager), pay);
+            IERC20(Currency.unwrap(inCur)).safeTransferFrom(job.payer, address(poolManager), paid);
             poolManager.settle();
         }
-        poolManager.take(outCur, job.recipient, out);
-        return abi.encode(out);
+        poolManager.take(_out(job.path[n - 1]), job.recipient, amount);
+        return abi.encode(amount);
     }
 }

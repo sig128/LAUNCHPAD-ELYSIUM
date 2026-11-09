@@ -122,15 +122,11 @@ function Overview({ token }: { token: DemoToken }) {
           },
           {
             title: 'Fee policy v1',
-            body: `1.00% of the HYPE side of every trade. ${surrendered ? '70%' : '60%'} to holders, 10% buy-order reserve, ${surrendered ? '0% creator (surrendered)' : '10% creator'}, 10% liquidity growth, 10% protocol. The pool’s LP fee is 0%.`,
+            body: `1.00% of the pair side of every trade. ${surrendered ? '90%' : '80%'} to holders, ${surrendered ? '0% creator (given to holders)' : '10% creator'}, 10% protocol. The pool’s LP fee is 0%.`,
           },
           {
             title: 'Outside liquidity',
-            body: 'Only the seed locker and the liquidity-growth manager can add positions to this pool, so there are no outside LPs and no LP fee to share.',
-          },
-          {
-            title: 'Reserve and liquidity growth',
-            body: 'Both are funded from fees and held per token. Automatic execution is not enabled yet, so these funds are held, not deployed as bids or positions.',
+            body: 'Only the seed locker can add a position to this pool, so there are no outside LPs and no LP fee to share.',
           },
           {
             title: 'Audit status',
@@ -148,9 +144,9 @@ function Overview({ token }: { token: DemoToken }) {
               ['Minting', 'Once, at launch. No later mint.'],
               ['Created', `${utc(token.createdAt)} UTC`],
               ['Creation block', token.createdBlock.toLocaleString('en-US')],
-              ['Opening FDV', `${fmtCompact(token.openingFdv)} HYPE`],
-              ['All-time high', `${fmtPrice(token.athX18)} HYPE`],
-              ['All-time low', `${fmtPrice(token.atlX18)} HYPE`],
+              ['Opening FDV', `${fmtCompact(token.openingFdv)} CANOPY`],
+              ['All-time high', `${fmtPrice(token.athX18)} CANOPY`],
+              ['All-time low', `${fmtPrice(token.atlX18)} CANOPY`],
             ]}
           />
           <p className="mt-1 text-[12px] text-ink-3">High and low cover indexed history from the creation block.</p>
@@ -159,12 +155,10 @@ function Overview({ token }: { token: DemoToken }) {
           <h3 className="mb-1 text-[14px] font-medium">Fees collected, lifetime</h3>
           <KeyValue
             rows={[
-              ['Gross fees', `${fmtAmount(token.fees.fee, 18, 4)} HYPE`],
-              ['Holder rewards', `${fmtAmount(token.fees.holders, 18, 4)} HYPE`],
-              ['Buy-order reserve', `${fmtAmount(token.fees.reserve, 18, 4)} HYPE`],
-              ['Creator', `${fmtAmount(token.fees.creator, 18, 4)} HYPE`],
-              ['Liquidity growth', `${fmtAmount(token.fees.liquidity, 18, 4)} HYPE`],
-              ['Protocol', `${fmtAmount(token.fees.protocol, 18, 4)} HYPE`],
+              ['Gross fees', `${fmtAmount(token.fees.fee, 18, 4)} CANOPY`],
+              ['Holder rewards', `${fmtAmount(token.fees.holders, 18, 4)} CANOPY`],
+              ['Creator', `${fmtAmount(token.fees.creator, 18, 4)} CANOPY`],
+              ['Protocol', `${fmtAmount(token.fees.protocol, 18, 4)} CANOPY`],
             ]}
           />
         </div>
@@ -187,7 +181,7 @@ function Trades({ token }: { token: DemoToken }) {
               <th className="py-2 pr-3 font-normal">Time (UTC)</th>
               <th className="py-2 pr-3 font-normal">Side</th>
               <th className="py-2 pr-3 text-right font-normal">Amount ({token.symbol})</th>
-              <th className="py-2 pr-3 text-right font-normal">Notional (HYPE)</th>
+              <th className="py-2 pr-3 text-right font-normal">Notional (CANOPY)</th>
               <th className="py-2 pr-3 text-right font-normal">Price after</th>
               <th className="py-2 pr-3 font-normal">Trader</th>
               <th className="py-2 pr-3 font-normal">Status</th>
@@ -220,7 +214,7 @@ function Trades({ token }: { token: DemoToken }) {
       </div>
       <div className="mt-3 flex items-center justify-between text-[12.5px] text-ink-3">
         <span>
-          {MODE === 'demo' ? 'Demo transactions have no explorer record.' : 'Explorer links appear once the explorer URL pattern is verified.'} Notional is the pre-fee HYPE side.
+          {MODE === 'demo' ? 'Demo transactions have no explorer record.' : 'Explorer links appear once the explorer URL pattern is verified.'} Notional is the pre-fee CANOPY side.
         </span>
         {list.length > n ? (
           <button type="button" className="btn btn-glass h-9" onClick={() => setN(n + 25)}>
@@ -300,14 +294,14 @@ function Liquidity({ token }: { token: DemoToken }) {
           <KeyValue
             rows={[
               ['Token inventory', `${fmtCompact(lv.poolToken)} ${token.symbol}`],
-              ['HYPE paid in by traders', `${fmtAmount(lv.poolQuote, 18, 3)} HYPE`],
-              ['Opening FDV (virtual)', `${fmtCompact(token.openingFdv)} HYPE`],
+              ['CANOPY paid in by traders', `${fmtAmount(lv.poolQuote, 18, 3)} CANOPY`],
+              ['Opening FDV (virtual)', `${fmtCompact(token.openingFdv)} CANOPY`],
               ['LP fee', '0%'],
               ['Seed position', 'Locked in SeedLiquidityLocker'],
             ]}
           />
           <p className="mt-1 text-[12px] text-ink-3">
-            The opening FDV sets the starting price. It is not HYPE sitting in the pool. All HYPE in the pool came from buyers.
+            The opening FDV sets the starting price. It is not CANOPY sitting in the pool. All CANOPY in the pool came from buyers.
           </p>
         </div>
         <div>
@@ -317,8 +311,8 @@ function Liquidity({ token }: { token: DemoToken }) {
               <thead className="text-left text-[12.5px] text-ink-3">
                 <tr>
                   <th className="py-2 pr-3 font-normal">Move</th>
-                  <th className="py-2 pr-3 text-right font-normal">HYPE to push up</th>
-                  <th className="py-2 text-right font-normal">HYPE out pushing down</th>
+                  <th className="py-2 pr-3 text-right font-normal">CANOPY to push up</th>
+                  <th className="py-2 text-right font-normal">CANOPY out pushing down</th>
                 </tr>
               </thead>
               <tbody className="num">
@@ -339,7 +333,7 @@ function Liquidity({ token }: { token: DemoToken }) {
         <div className="grid gap-3 sm:grid-cols-3">
           {lv.impact.map((im) => (
             <div key={String(im.quoteIn)} className="inset p-3.5">
-              <div className="text-[12.5px] text-ink-3">Buy {fmtAmount(im.quoteIn, 18, 0)} HYPE</div>
+              <div className="text-[12.5px] text-ink-3">Buy {fmtAmount(im.quoteIn, 18, 0)} CANOPY</div>
               <div className="num text-[16px]">{fmtBps(Math.max(0, im.priceImpactBps))} impact</div>
               <div className="num text-[12.5px] text-ink-2">
                 ≈ {fmtCompact(im.tokenOut)} {token.symbol}
@@ -348,32 +342,6 @@ function Liquidity({ token }: { token: DemoToken }) {
           ))}
         </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="inset p-3.5">
-          <h3 className="text-[14px] font-medium">Buy-order reserve</h3>
-          <KeyValue
-            rows={[
-              ['Funded', `${fmtAmount(token.fees.reserve, 18, 4)} HYPE`],
-              ['Committed to orders', '0 HYPE'],
-              ['Spent on purchases', '0 HYPE'],
-              ['Status', 'Funded, execution unavailable'],
-            ]}
-          />
-        </div>
-        <div className="inset p-3.5">
-          <h3 className="text-[14px] font-medium">Liquidity-growth budget</h3>
-          <KeyValue
-            rows={[
-              ['Funded', `${fmtAmount(token.fees.liquidity, 18, 4)} HYPE`],
-              ['Deployed into positions', '0 HYPE'],
-              ['Status', 'Funded, execution unavailable'],
-            ]}
-          />
-        </div>
-      </div>
-      <p className="text-[12.5px] text-ink-3">
-        Reserves are finite capital, not insurance or a price floor. Execution stays off until its manipulation tests pass.
-      </p>
     </div>
   );
 }
@@ -392,11 +360,11 @@ function Rewards({ token }: { token: DemoToken }) {
           <h3 className="mb-1 text-[14px] font-medium">Holder rewards</h3>
           <KeyValue
             rows={[
-              ['Funded from fees', `${fmtAmount(rv.funded, 18, 4)} HYPE`],
-              ['Released', `${fmtAmount(rv.released, 18, 4)} HYPE`],
-              ['Still releasing', `${fmtAmount(rv.pendingRelease, 18, 4)} HYPE`],
-              ['Claimed', `${fmtAmount(rv.claimed, 18, 4)} HYPE`],
-              ['Released, not yet claimed', `${fmtAmount(rv.releasedUnclaimed, 18, 4)} HYPE`],
+              ['Funded from fees', `${fmtAmount(rv.funded, 18, 4)} CANOPY`],
+              ['Released', `${fmtAmount(rv.released, 18, 4)} CANOPY`],
+              ['Still releasing', `${fmtAmount(rv.pendingRelease, 18, 4)} CANOPY`],
+              ['Claimed', `${fmtAmount(rv.claimed, 18, 4)} CANOPY`],
+              ['Released, not yet claimed', `${fmtAmount(rv.releasedUnclaimed, 18, 4)} CANOPY`],
               ['Eligible supply', `${fmtCompact(rv.eligibleSupply)} ${token.symbol}`],
               ['Release window', streaming ? `Ends ${utc(rv.streamEndsAt)} UTC` : 'Nothing releasing now'],
             ]}
@@ -405,13 +373,13 @@ function Rewards({ token }: { token: DemoToken }) {
         <div className="space-y-3">
           <div className="inset p-3.5">
             <div className="text-[12.5px] text-ink-3">Funded per 1M tokens held, last 7 days (historical)</div>
-            <div className="num text-[18px]">{fmtAmount(per1m, 18, 5)} HYPE</div>
+            <div className="num text-[18px]">{fmtAmount(per1m, 18, 5)} CANOPY</div>
             <div className="text-[12px] text-ink-3">7-day holder allocation ÷ current eligible supply. Not a forecast or an APY.</div>
           </div>
           <div className="inset p-3.5">
             <div className="text-[12.5px] text-ink-3">Demo wallet</div>
-            <div className="num text-[18px]">{fmtAmount(mine?.rewardsClaimable ?? 0n, 18, 6)} HYPE claimable</div>
-            <div className="num text-[12.5px] text-ink-2">{fmtAmount(mine?.rewardsClaimed ?? 0n, 18, 6)} HYPE claimed before</div>
+            <div className="num text-[18px]">{fmtAmount(mine?.rewardsClaimable ?? 0n, 18, 6)} CANOPY claimable</div>
+            <div className="num text-[12.5px] text-ink-2">{fmtAmount(mine?.rewardsClaimed ?? 0n, 18, 6)} CANOPY claimed before</div>
             <button type="button" className="btn btn-primary mt-3 w-full" disabled={Boolean(blocked) || !mine?.rewardsClaimable}>
               Claim rewards
             </button>
@@ -424,8 +392,7 @@ function Rewards({ token }: { token: DemoToken }) {
         Each fee arrival is added to whatever has not been released yet, and that total releases evenly over the next hour. This is one merged
         stream, not separate one-hour streams. Rewards follow balances held during release, so buying just before a fee arrives does not earn
         what was released earlier, and buying and selling in the same block earns nothing. Earned rewards stay claimable after you sell. While no
-        eligible holder exists, release pauses. Excluded from rewards: the pool inventory, the seed locker, the fee vault, the reserve sink and the
-        burn address. Contracts and smart wallets earn like any other address. This reduces snapshot sniping. It does not make the market bot-proof.
+        eligible holder exists, release pauses. Excluded from rewards: the pool inventory, the seed locker, the fee vault and the burn address. Contracts and smart wallets earn like any other address. This reduces snapshot sniping. It does not make the market bot-proof.
       </div>
     </div>
   );
@@ -447,7 +414,7 @@ function Creator({ token }: { token: DemoToken }) {
               [
                 'Initial buy',
                 token.creatorInitialBuyTokens > 0n
-                  ? `${fmtCompact(token.creatorInitialBuyTokens)} ${token.symbol} (${fmtBps(pct)}) for ${fmtAmount(token.creatorInitialBuyQuote, 18, 2)} HYPE`
+                  ? `${fmtCompact(token.creatorInitialBuyTokens)} ${token.symbol} (${fmtBps(pct)}) for ${fmtAmount(token.creatorInitialBuyQuote, 18, 2)} CANOPY`
                   : 'None',
               ],
               ['Holding now', `${fmtCompact(holding)} ${token.symbol}`],
@@ -456,9 +423,9 @@ function Creator({ token }: { token: DemoToken }) {
                 'Fee share',
                 token.creatorSurrenderedAt ? `Surrendered to holders on ${utc(token.creatorSurrenderedAt)} UTC` : '10% of fees, claimable by the creator',
               ],
-              ['Creator fees accrued', `${fmtAmount(token.fees.creator, 18, 4)} HYPE`],
-              ['Claimed by creator', `${fmtAmount(token.creatorClaimed, 18, 4)} HYPE`],
-              ['Owed to creator', `${fmtAmount(owed, 18, 4)} HYPE`],
+              ['Creator fees accrued', `${fmtAmount(token.fees.creator, 18, 4)} CANOPY`],
+              ['Claimed by creator', `${fmtAmount(token.creatorClaimed, 18, 4)} CANOPY`],
+              ['Owed to creator', `${fmtAmount(owed, 18, 4)} CANOPY`],
             ]}
           />
         </div>
@@ -473,7 +440,7 @@ function Creator({ token }: { token: DemoToken }) {
                   <span className={t.side === 'buy' ? 'text-up' : 'text-down'}>
                     {t.side === 'buy' ? 'Bought' : 'Sold'} {fmtCompact(t.tokenAmount)}
                   </span>
-                  <span className="text-ink-2">{fmtAmount(t.quoteNotional, 18, 2)} HYPE</span>
+                  <span className="text-ink-2">{fmtAmount(t.quoteNotional, 18, 2)} CANOPY</span>
                   <span className="text-ink-3">{utc(t.timestamp)}</span>
                 </li>
               ))}
@@ -498,7 +465,7 @@ function Activity({ token }: { token: DemoToken }) {
       {events.map((e, i) => (
         <li key={i} className="flex flex-wrap items-baseline justify-between gap-2 py-2.5">
           <span className="text-ink">{e.text}</span>
-          <span className="num text-ink-2">{e.amount !== undefined ? `${fmtAmount(e.amount, 18, 5)} HYPE` : ''}</span>
+          <span className="num text-ink-2">{e.amount !== undefined ? `${fmtAmount(e.amount, 18, 5)} CANOPY` : ''}</span>
           <span className="num w-full text-[12.5px] text-ink-3 sm:w-auto">{utc(e.ts)} UTC</span>
         </li>
       ))}

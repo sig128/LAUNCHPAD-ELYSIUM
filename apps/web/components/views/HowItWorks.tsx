@@ -6,6 +6,7 @@ import { IconCheck, IconClose, IconDrop, IconLayers, IconLeaf, IconLock, IconSea
 
 const SECTIONS = [
   { id: 'overview', label: 'Overview' },
+  { id: 'canopy', label: 'CANOPY, the main coin' },
   { id: 'fees', label: 'Where the 1% goes' },
   { id: 'rewards', label: 'Holder rewards' },
   { id: 'launch', label: 'What a launch creates' },
@@ -15,7 +16,7 @@ const SECTIONS = [
   { id: 'faq', label: 'Questions' },
 ];
 
-const SPLIT_COLORS = { holders: '#c8f580', reserve: '#95d9aa', creator: '#e9c17b', liquidity: '#7fb6d9', protocol: '#8fa596' };
+const SPLIT_COLORS = { holders: '#c8f580', creator: '#e9c17b', protocol: '#8fa596' };
 
 function useInView<T extends Element>(threshold = 0.3) {
   const ref = useRef<T>(null);
@@ -93,9 +94,9 @@ function Code({ children }: { children: ReactNode }) {
 
 function Overview() {
   const steps = [
-    { icon: IconSprout, title: 'Launch', body: 'One transaction creates the token, its pool, and a liquidity position that is locked for good.' },
-    { icon: IconSwap, title: 'Trade', body: 'Every buy and sell pays a single 1% fee on the HYPE side. Nothing else is taken.' },
-    { icon: IconDrop, title: 'Earn', body: '60% of every fee flows to holders over the next hour. Claim whenever you like.' },
+    { icon: IconSprout, title: 'Launch', body: 'Free apart from gas. One transaction creates the token, its pool against CANOPY, and a liquidity position locked for good.' },
+    { icon: IconSwap, title: 'Trade', body: 'Every buy and sell pays a single 1% fee on the CANOPY side. Pay with HYPE and it routes through CANOPY for you.' },
+    { icon: IconDrop, title: 'Earn', body: '80% of every fee flows to holders over the next hour. Claim whenever you like.' },
   ];
   return (
     <section id="overview" aria-labelledby="overview-title" className="panel relative scroll-mt-24 overflow-hidden p-6 sm:p-10">
@@ -134,6 +135,85 @@ function Overview() {
   );
 }
 
+/* ---------------- Main coin ---------------- */
+
+function Hop({ label, sub, strong = false }: { label: string; sub: string; strong?: boolean }) {
+  return (
+    <div className={`inset flex min-w-0 flex-1 flex-col items-center px-3 py-4 text-center ${strong ? 'ring-1 ring-lime/40' : ''}`}>
+      <span className={`num text-[15px] font-semibold ${strong ? 'text-lime' : 'text-ink'}`}>{label}</span>
+      <span className="mt-0.5 text-[12px] text-ink-3">{sub}</span>
+    </div>
+  );
+}
+
+function Arrow({ label }: { label: string }) {
+  return (
+    <div className="flex shrink-0 flex-col items-center justify-center px-1 text-ink-3" aria-hidden>
+      <span className="text-[11px]">{label}</span>
+      <svg width="28" height="10" viewBox="0 0 28 10" className="mt-0.5">
+        <path d="M0 5h24M20 1l4 4-4 4" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      </svg>
+    </div>
+  );
+}
+
+function MainCoin() {
+  const points = [
+    { icon: IconSprout, title: 'Free to launch', body: 'No bridge or setup cost per coin. The launcher pays gas and nothing else.' },
+    { icon: IconLayers, title: 'One coin under every launch', body: 'Buying any coin buys CANOPY first, and that CANOPY stays in the coin’s pool.' },
+    { icon: IconDrop, title: 'Holders paid twice over', body: 'A coin’s holders earn 80% of its fees in CANOPY. CANOPY holders earn 80% of CANOPY’s own market.' },
+  ];
+  return (
+    <Section
+      id="canopy"
+      title="CANOPY, the main coin"
+      lead="Every coin launched here trades against CANOPY. You can still pay with HYPE: the app swaps it through CANOPY in the same transaction."
+    >
+      <div className="flex items-stretch gap-1" role="img" aria-label="Paying with HYPE: HYPE to CANOPY to the coin, each step charging 1%">
+        <Hop label="HYPE" sub="what you pay with" />
+        <Arrow label="1% fee" />
+        <Hop label="CANOPY" sub="main coin" strong />
+        <Arrow label="1% fee" />
+        <Hop label="Coin" sub="any launch" />
+      </div>
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
+        {points.map(({ icon: Icon, title, body }) => (
+          <div key={title} className="inset flex gap-4 p-5">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-lime/10 text-lime ring-1 ring-lime/20">
+              <Icon size={18} />
+            </span>
+            <div>
+              <h3 className="text-[15.5px] font-semibold">{title}</h3>
+              <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">{body}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="inset mt-5 p-5">
+        <h3 className="text-[15.5px] font-semibold">One token on two chains</h3>
+        <div className="mt-4 flex items-stretch gap-1" role="img" aria-label="Elysium and Solana each hold half of CANOPY's supply, joined by Wormhole">
+          <Hop label="Elysium" sub="500M CANOPY vs HYPE" />
+          <div className="flex shrink-0 flex-col items-center justify-center px-2 text-lime" aria-hidden>
+            <span className="text-[11px] text-ink-3">Wormhole</span>
+            <svg width="40" height="12" viewBox="0 0 40 12" className="mt-0.5">
+              <path d="M4 3h32M32 0l4 3-4 3M36 9H4M8 6l-4 3 4 3" fill="none" stroke="currentColor" strokeWidth="1.3" />
+            </svg>
+          </div>
+          <Hop label="Solana" sub="500M CANOPY vs SOL" />
+        </div>
+        <p className="mt-4 max-w-[70ch] text-[13.5px] leading-relaxed text-ink-2">
+          1 billion CANOPY in total. Half starts in a locked pool on Elysium and half in a locked pool on Solana, both opening at the same price,
+          so nobody has to buy supply first. Moving CANOPY across burns it on one chain and mints it on the other, so the total never changes.
+          Traders who buy where it is cheaper and sell where it is dearer keep one price, and together the two pools behave like a single curve.
+        </p>
+        <p className="mt-2 text-[12.5px] text-ink-3">
+          Status: the Elysium contracts are written and tested locally. CANOPY is not launched yet, and the Solana side and Wormhole link are next.
+        </p>
+      </div>
+    </Section>
+  );
+}
+
 /* ---------------- Fees ---------------- */
 
 const VOLUMES = [1_000, 5_000, 10_000, 50_000, 100_000, 250_000, 500_000, 1_000_000];
@@ -144,37 +224,36 @@ function Fees() {
   const [vi, setVi] = useState(4);
   const [barRef, inView] = useInView<HTMLDivElement>(0.4);
   const parts = [
-    { key: 'holders', label: 'Holders', pct: surrendered ? 70 : 60, body: 'Flows to everyone holding the token, in proportion to their balance.' },
-    { key: 'reserve', label: 'Buy-order reserve', pct: 10, body: 'Held for that market only. Buybacks stay off until they pass their safety tests.' },
+    { key: 'holders', label: 'Holders', pct: surrendered ? 90 : 80, body: 'Flows to everyone holding the token, in proportion to their balance.' },
     {
       key: 'creator',
       label: 'Creator',
       pct: surrendered ? 0 : 10,
       body: surrendered ? 'Given to holders permanently.' : 'The launcher’s share. They can hand it to holders for good.',
     },
-    { key: 'liquidity', label: 'Liquidity growth', pct: 10, body: 'Builds more locked liquidity for that market. Never paid to outside LPs.' },
     { key: 'protocol', label: 'Protocol', pct: 10, body: 'Keeps the platform running.' },
   ] as const;
   const vol = VOLUMES[vi];
   const fees = vol * 0.01;
-  const holders = fees * (surrendered ? 0.7 : 0.6);
+  const holders = fees * (surrendered ? 0.9 : 0.8);
 
   return (
     <Section
       id="fees"
       title="Where the 1% goes"
-      lead="Every buy and sell pays one fee: 1% of the HYPE side of the trade. Apart from network gas, that is the whole cost."
+      lead="Every buy and sell pays one fee: 1% of the CANOPY side of the trade. Apart from network gas, that is the whole cost."
     >
       <div className="grid gap-10 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)]">
         <div>
           <div className="display text-[112px] leading-[0.9] text-ink sm:text-[148px]" aria-label="One percent">
             1%
           </div>
-          <p className="mt-2 text-[15px] text-ink-2">of the HYPE side, on every trade</p>
+          <p className="mt-2 text-[15px] text-ink-2">of the CANOPY side, on every trade</p>
           <ul className="mt-6 space-y-3 text-[14.5px] text-ink-2">
             {[
-              'Buys pay it from the HYPE you send.',
-              'Sells pay it from the HYPE the pool returns.',
+              'Buys pay it from the CANOPY you send.',
+              'Sells pay it from the CANOPY the pool returns.',
+              'Paying with HYPE adds one hop through CANOPY’s own market, which charges its own 1%.',
               'The pool’s own LP fee is 0%, so nothing stacks on top.',
               'No tax on token transfers. Rounding leftovers go to holders.',
             ].map((t) => (
@@ -240,7 +319,7 @@ function Fees() {
         <label className="mt-4 block">
           <span className="flex items-baseline justify-between text-[14px] text-ink-2">
             <span>Daily trading volume in one market</span>
-            <span className="num text-[16px] text-ink">{n0(vol)} HYPE</span>
+            <span className="num text-[16px] text-ink">{n0(vol)} CANOPY</span>
           </span>
           <input
             type="range"
@@ -250,18 +329,18 @@ function Fees() {
             value={vi}
             onChange={(e) => setVi(Number(e.target.value))}
             className="mt-3 w-full accent-[#c8f580]"
-            aria-valuetext={`${n0(vol)} HYPE`}
+            aria-valuetext={`${n0(vol)} CANOPY`}
           />
         </label>
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           {[
             { label: 'Fees collected', value: fees },
-            { label: `To holders (${surrendered ? 70 : 60}%)`, value: holders },
+            { label: `To holders (${surrendered ? 90 : 80}%)`, value: holders },
             { label: 'Share for 1% of eligible supply', value: holders * 0.01 },
           ].map((s) => (
             <div key={s.label} className="inset p-4">
               <div className="text-[12.5px] text-ink-3">{s.label}</div>
-              <div className="num mt-1 text-[22px] font-medium tracking-[-0.01em]">{n0(s.value)} HYPE</div>
+              <div className="num mt-1 text-[22px] font-medium tracking-[-0.01em]">{n0(s.value)} CANOPY</div>
             </div>
           ))}
         </div>
@@ -272,8 +351,8 @@ function Fees() {
 
       <Builders>
         <p>
-          fee = floor(quote notional × 100 ÷ 10,000). Buys use the gross HYPE input, sells the gross HYPE output. Reserve, creator, liquidity growth
-          and protocol each get floor(fee × 1,000 ÷ 10,000); holders get the remainder, so all rounding dust goes to holders and the parts always
+          fee = floor(quote notional × 100 ÷ 10,000). Buys use the gross pair input, sells the gross pair output. Creator and protocol each get
+          floor(fee × 1,000 ÷ 10,000); holders get the remainder, so all rounding dust goes to holders and the parts always
           sum to the fee. Exact-output swaps are rejected rather than quoted.
         </p>
       </Builders>
@@ -350,7 +429,7 @@ function Rewards() {
     <Section
       id="rewards"
       title="How holder rewards flow"
-      lead="Holder rewards are paid in HYPE from the fees each market actually collects. They release gradually, so they go to the people holding while trading happens."
+      lead="Holder rewards are paid in CANOPY from the fees each market actually collects. They release gradually, so they go to the people holding while trading happens."
     >
       <StreamDiagram />
       <div className="mt-6 grid gap-3 md:grid-cols-3">
@@ -364,7 +443,7 @@ function Rewards() {
       <div className="mt-6">
         <h3 className="text-[14px] text-ink-2">Never earns rewards</h3>
         <div className="mt-2 flex flex-wrap gap-2">
-          {['Unsold pool inventory', 'Seed liquidity locker', 'Fee vault', 'Reserve sink', 'Burn address'].map((t) => (
+          {['Unsold pool inventory', 'Seed liquidity locker', 'Fee vault', 'Burn address'].map((t) => (
             <span key={t} className="tag bg-white/6 px-3 py-1 text-[13px] text-ink-2 ring-1 ring-white/10">
               {t}
             </span>
@@ -430,7 +509,7 @@ function RangeDiagram() {
         </text>
       </svg>
       <p className="mt-3 text-[13px] text-ink-2">
-        Buyers move the price up through the band. HYPE enters the pool only when people buy; nothing backs the opening price.
+        Buyers move the price up through the band. CANOPY enters the pool only when people buy; nothing backs the opening price.
       </p>
     </div>
   );
@@ -441,7 +520,7 @@ function Launch() {
     { icon: IconLayers, title: '1,000,000,000 supply', body: 'Minted once at launch. No later minting.' },
     { icon: IconLock, title: 'Liquidity locked forever', body: 'The launch position belongs to a locker with no withdraw function.' },
     { icon: IconCheck, title: 'Plain token', body: 'No transfer tax, blacklist or freeze switch.' },
-    { icon: IconSprout, title: 'You set the opening price', body: 'It comes from the opening FDV you choose, in HYPE.' },
+    { icon: IconSprout, title: 'You set the opening price', body: 'It comes from the opening FDV you choose, in CANOPY.' },
     { icon: IconSwap, title: 'Creator buys are public', body: 'Any creator buy happens in the launch transaction and shows on the market page.' },
     { icon: IconLeaf, title: 'No migration', body: 'A market lives in one pool from day one. "Matured" is only a status label.' },
   ];
@@ -449,7 +528,7 @@ function Launch() {
     <Section
       id="launch"
       title="What a launch creates"
-      lead="One transaction creates the token, opens its Uniswap v4 pool on Elysium and locks the liquidity. If any step fails, nothing is created."
+      lead="One transaction creates the token, opens its Uniswap v4 pool against CANOPY on Elysium and locks the liquidity. If any step fails, nothing is created."
     >
       <RangeDiagram />
       <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -483,7 +562,6 @@ const ROLES = [
     can: ['Claim the 10% protocol share', 'Pause new launches'],
     cannot: ['Seize funds or rewrite balances', 'Change splits on existing markets', 'Withdraw locked liquidity', 'Block sells or claims'],
   },
-  { role: 'Keeper (future)', can: ['Trigger reserve actions within published limits'], cannot: ['Choose recipients or routes', 'Exceed per-period spend limits'] },
   { role: 'Anyone', can: ['Trade, launch and read every value'], cannot: ['Create pools with the Canopy hook outside the factory'] },
 ];
 
@@ -638,7 +716,7 @@ function Metrics() {
 const FAQ = [
   {
     q: 'Is there a price floor or a guaranteed return?',
-    a: 'No. Rewards come only from fees that trading actually collects, and the buy-order reserve is finite capital, not insurance. Prices can fall to near zero.',
+    a: 'No. Rewards come only from fees that trading actually collects. Prices can fall to near zero.',
   },
   {
     q: 'Can a creator pull the liquidity?',
@@ -647,7 +725,19 @@ const FAQ = [
   { q: 'What does a trade cost?', a: 'The 1% fee on the pair side plus Elysium network gas. Nothing else is taken.' },
   {
     q: 'Can I pair my launch with a stock?',
-    a: 'The contracts support it: a market can trade against an approved stock token instead of HYPE, and its fee, holder rewards and creator fees are then paid in that stock. Stock pairs open once tokens such as Ondo’s are live on Elysium and approved, and only where local rules allow tokenized stocks.',
+    a: 'The contracts support it: a market can trade against an approved stock token instead of CANOPY, and its fee, holder rewards and creator fees are then paid in that stock. Stock pairs open once tokens such as Ondo’s are live on Elysium and approved, and only where local rules allow tokenized stocks.',
+  },
+  {
+    q: 'Why does every coin trade against CANOPY?',
+    a: 'So launching stays free and every launch builds on one shared coin. Buying any coin buys CANOPY first, and that CANOPY stays in the coin’s pool, so CANOPY moves with activity across all launches. It also falls when launches are sold, so it is not a safe asset.',
+  },
+  {
+    q: 'Can I pay with HYPE?',
+    a: 'Yes. The app swaps HYPE to CANOPY and CANOPY to the coin in one transaction, and back again when you sell. Each step is its own market, so the 1% fee applies at each step.',
+  },
+  {
+    q: 'Is CANOPY on Solana too?',
+    a: 'That is the plan: 1 billion CANOPY in total, half starting on Elysium against HYPE and half on Solana against SOL, joined by Wormhole. Moving CANOPY between chains burns it on one side and mints it on the other, so the total never changes. It is not live yet.',
   },
   { q: 'When can I claim rewards?', a: 'Any time, including after you sell. Rewards that have finished releasing are claimable straight away.' },
   { q: 'Are the contracts audited?', a: 'Not yet. They are tested against real Uniswap v4 contracts locally, which is not an audit. Treat every market as high risk.' },
@@ -709,6 +799,7 @@ export function HowItWorks() {
           ))}
         </nav>
         <Overview />
+        <MainCoin />
         <Fees />
         <Rewards />
         <Launch />

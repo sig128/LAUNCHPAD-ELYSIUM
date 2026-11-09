@@ -63,7 +63,7 @@ export function SearchPalette({ open, onOpenChange }: { open: boolean; onOpenCha
                     {MODE === 'demo' ? ' (demo)' : ''} {t.address}
                   </div>
                 </div>
-                <span className="num text-[13px] text-ink-2">{fmtPrice(t.priceX18)} HYPE</span>
+                <span className="num text-[13px] text-ink-2">{fmtPrice(t.priceX18)} CANOPY</span>
               </Command.Item>
             ))}
           </Command.Group>

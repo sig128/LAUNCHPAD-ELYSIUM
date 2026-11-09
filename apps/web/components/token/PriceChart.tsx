@@ -71,7 +71,7 @@ export function PriceChart({ token }: { token: DemoToken }) {
   const last = candles.at(-1);
   const hi = candles.reduce((m, c) => Math.max(m, c.high), 0);
   const lo = candles.reduce((m, c) => Math.min(m, c.low), Number.POSITIVE_INFINITY);
-  const unit = metric === 'fdv' ? 'HYPE FDV' : 'HYPE per token';
+  const unit = metric === 'fdv' ? 'CANOPY FDV' : 'CANOPY per token';
 
   return (
     <section aria-label={`${token.symbol} chart`} className="panel p-3 sm:p-4">
@@ -115,7 +115,7 @@ export function PriceChart({ token }: { token: DemoToken }) {
                     <th className="py-1 pr-3 text-right font-normal">High</th>
                     <th className="py-1 pr-3 text-right font-normal">Low</th>
                     <th className="py-1 pr-3 text-right font-normal">Close</th>
-                    <th className="py-1 text-right font-normal">Volume (HYPE)</th>
+                    <th className="py-1 text-right font-normal">Volume (CANOPY)</th>
                   </tr>
                 </thead>
                 <tbody className="num">

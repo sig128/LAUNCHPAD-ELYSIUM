@@ -67,7 +67,7 @@ export function TokenWorkspace({ address }: { address: string }) {
               <h1 className="display min-w-0 text-[28px] leading-tight sm:text-[32px]">{token.name}</h1>
               <span className="text-[15px] text-ink-2">{token.symbol}</span>
               {token.matured ? (
-                <span title="Status only: this market passed 20,000 HYPE lifetime volume and 3 days of age. No migration happens.">
+                <span title="Status only: this market passed 20,000 CANOPY lifetime volume and 3 days of age. No migration happens.">
                   <Pill tone="lime">Matured</Pill>
                 </span>
               ) : null}
@@ -95,14 +95,14 @@ export function TokenWorkspace({ address }: { address: string }) {
       </section>
 
       <section aria-label="Key figures" className="panel grid grid-cols-2 gap-x-6 gap-y-3 px-4 py-3.5 sm:grid-cols-4 xl:grid-cols-8">
-        <Stat label="Price" value={`${fmtPrice(token.priceX18)} HYPE`} />
-        <Stat label="FDV" value={`${fmtCompact(token.fdv)} HYPE`} hint="Price × total supply. Not circulating market cap." />
+        <Stat label="Price" value={`${fmtPrice(token.priceX18)} CANOPY`} />
+        <Stat label="FDV" value={`${fmtCompact(token.fdv)} CANOPY`} hint="Price × total supply. Not circulating market cap." />
         <Stat label="24h change" value={<Change value={s24.changePct} />} />
-        <Stat label="24h volume" value={`${fmtCompact(s24.volume)} HYPE`} />
+        <Stat label="24h volume" value={`${fmtCompact(s24.volume)} CANOPY`} />
         <Stat label="Holders" value={token.holderCount.toLocaleString('en-US')} hint="Excludes the pool and system contracts" />
-        <Stat label="Exit depth −2%" value={`${fmtCompact(depth2)} HYPE`} hint="HYPE received selling until the price is 2% lower, after the fee" />
-        <Stat label="Holder rewards, 7d" value={`${fmtAmount(rv.funded7d, 18, 3)} HYPE`} />
-        <Stat label="Trading fee" value="1.00%" hint="Hook fee on the HYPE side. LP fee is 0%." />
+        <Stat label="Exit depth −2%" value={`${fmtCompact(depth2)} CANOPY`} hint="CANOPY received selling until the price is 2% lower, after the fee" />
+        <Stat label="Holder rewards, 7d" value={`${fmtAmount(rv.funded7d, 18, 3)} CANOPY`} />
+        <Stat label="Trading fee" value="1.00%" hint="Hook fee on the CANOPY side. LP fee is 0%." />
       </section>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
@@ -133,7 +133,7 @@ export function TokenWorkspace({ address }: { address: string }) {
                 <IconClose size={16} />
               </Dialog.Close>
             </div>
-            <Dialog.Description className="sr-only">Buy or sell with a 1% fee on the HYPE side.</Dialog.Description>
+            <Dialog.Description className="sr-only">Buy or sell with a 1% fee on the CANOPY side.</Dialog.Description>
             <TradeTicket token={token} />
           </Dialog.Content>
         </Dialog.Portal>

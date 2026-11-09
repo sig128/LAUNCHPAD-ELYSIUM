@@ -9,7 +9,7 @@ export const BRAND = {
 export const COPY = {
   heroTitle: 'Find your next market.',
   heroSub: 'Launch, trade and earn on Elysium.',
-  introSub: 'Launch, trade and earn on Elysium. Holders receive 60% of the trading fees each market collects.',
+  introSub: 'Launch, trade and earn on Elysium. Holders receive 80% of the trading fees each market collects.',
   demoNotice:
     'You are looking at demo data. Markets, trades, holders and fees are simulated from fixtures, and no transaction can be sent.',
 };

@@ -53,8 +53,8 @@ export function TradeTicket({ token, compact = false }: { token: DemoToken; comp
   const insufficient = amount !== null && amount > balance;
   const invalid = input.trim() !== '' && amount === null;
   const blocked = writeBlockReason();
-  const inUnit = side === 'buy' ? 'HYPE' : token.symbol;
-  const outUnit = side === 'buy' ? token.symbol : 'HYPE';
+  const inUnit = side === 'buy' ? 'CANOPY' : token.symbol;
+  const outUnit = side === 'buy' ? token.symbol : 'CANOPY';
 
   let problem: string | null = null;
   if (invalid) problem = 'Enter a number, like 2.5.';
@@ -121,7 +121,7 @@ export function TradeTicket({ token, compact = false }: { token: DemoToken; comp
           {side === 'buy'
             ? settings.quickBuy.map((q) => (
                 <button key={q} type="button" className="chip h-8 border border-line" onClick={() => setInput(q)}>
-                  {q} HYPE
+                  {q} CANOPY
                 </button>
               ))
             : SELL_PCTS.map((p) => (
@@ -156,32 +156,24 @@ export function TradeTicket({ token, compact = false }: { token: DemoToken; comp
             onClick={() => setShowSplit((s) => !s)}
           >
             <span className="text-ink-2 underline decoration-white/20 underline-offset-4">Trading fee 1.00%</span>
-            <span className="num">{quote ? `${fmtAmount(quote.fee, 18, 6)} HYPE` : 'n/a'}</span>
+            <span className="num">{quote ? `${fmtAmount(quote.fee, 18, 6)} CANOPY` : 'n/a'}</span>
           </button>
           {showSplit ? (
             <ul className="mt-2 space-y-1 text-[12.5px] text-ink-2">
               <li className="flex justify-between">
-                <span>Holder rewards {surrendered ? '70%' : '60%'}</span>
+                <span>Holder rewards {surrendered ? '90%' : '80%'}</span>
                 <span className="num">{split ? fmtAmount(split.holders, 18, 6) : '0'}</span>
-              </li>
-              <li className="flex justify-between">
-                <span>Buy-order reserve 10%</span>
-                <span className="num">{split ? fmtAmount(split.reserve, 18, 6) : '0'}</span>
               </li>
               <li className="flex justify-between">
                 <span>Creator {surrendered ? '0% (surrendered)' : '10%'}</span>
                 <span className="num">{split ? fmtAmount(split.creator, 18, 6) : '0'}</span>
               </li>
               <li className="flex justify-between">
-                <span>Liquidity growth 10%</span>
-                <span className="num">{split ? fmtAmount(split.liquidity, 18, 6) : '0'}</span>
-              </li>
-              <li className="flex justify-between">
                 <span>Protocol 10%</span>
                 <span className="num">{split ? fmtAmount(split.protocol, 18, 6) : '0'}</span>
               </li>
               <li className="pt-1 text-ink-3">
-                {side === 'buy' ? 'Taken from your HYPE before it reaches the pool.' : 'Taken from the HYPE the pool pays out.'} No other
+                {side === 'buy' ? 'Taken from your CANOPY before it reaches the pool.' : 'Taken from the CANOPY the pool pays out.'} No other
                 trading fee applies: the pool’s LP fee is 0%.
               </li>
             </ul>
@@ -220,7 +212,7 @@ export function TradeTicket({ token, compact = false }: { token: DemoToken; comp
             {exits.map((e) => (
               <li key={e.p} className="inset px-3 py-2.5">
                 <div className="text-[12.5px] text-ink-3">Sell {e.p}%</div>
-                <div className="num text-[14.5px]">{fmtCompact(e.out)} HYPE</div>
+                <div className="num text-[14.5px]">{fmtCompact(e.out)} CANOPY</div>
                 <div className="num text-[12px] text-ink-3">impact {fmtBps(Math.max(0, e.impact))}</div>
               </li>
             ))}

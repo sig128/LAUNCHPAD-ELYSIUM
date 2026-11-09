@@ -10,9 +10,9 @@ test('fee splits always sum to the fee and dust goes to holders', () => {
   for (const fee of [0n, 1n, 7n, 9_999n, 10_001n, 123_456_789_012_345_678n]) {
     for (const surrendered of [false, true]) {
       const s = splitFee(fee, surrendered);
-      assert.equal(s.holders + s.reserve + s.creator + s.liquidity + s.protocol, fee);
+      assert.equal(s.holders + s.creator + s.protocol, fee);
       if (surrendered) assert.equal(s.creator, 0n);
-      assert.ok(s.holders >= (fee * (surrendered ? 7_000n : 6_000n)) / 10_000n);
+      assert.ok(s.holders >= (fee * (surrendered ? 9_000n : 8_000n)) / 10_000n);
     }
   }
   assert.equal(feeOn(10n ** 18n), 10n ** 16n);
@@ -86,7 +86,7 @@ test('demo fixtures reconcile', () => {
     assert.equal(held, t.ledger.eligibleSupply, `${t.symbol} eligible supply`);
     const feeSum = t.trades.reduce((s, tr) => s + tr.fee, 0n);
     assert.equal(feeSum, t.fees.fee);
-    assert.equal(t.fees.holders + t.fees.reserve + t.fees.creator + t.fees.liquidity + t.fees.protocol, t.fees.fee);
+    assert.equal(t.fees.holders + t.fees.creator + t.fees.protocol, t.fees.fee);
     assert.equal(t.ledger.fundedTotal, t.fees.holders);
     assert.ok(t.ledger.claimedTotal <= t.ledger.releasedAt(BigInt(ds.anchor)));
     assert.ok(t.creatorClaimed <= t.fees.creator);

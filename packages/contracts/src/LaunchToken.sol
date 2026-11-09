@@ -10,8 +10,13 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 ///  - While no eligible balance exists the release pauses; the remaining duration is preserved.
 ///  - index += rate * dt * 1e18 / eligibleSupply (rate carries 1e18 scale, index 1e36 per raw unit).
 ///  - Before any balance change: earned += balance * (index - paid) / 1e36. O(1), no loops, no external calls.
-///  - Excluded addresses are fixed at deployment and never accrue. Everything rounds down (solvent).
-///  Minted exactly once. No owner, no further mint, no blacklist, no pause, no transfer tax.
+///  - Excluded addresses are set at deployment (plus the bridge minter, see below) and never accrue.
+///    Everything rounds down (solvent).
+///  Regular launches: minted exactly once, bridgeAdmin is zero, so no further mint or burn can ever happen.
+///  The main coin (CANOPY) lives on several chains through Wormhole Native Token Transfers in burning
+///  mode: its bridgeAdmin may set one minter, once (the NTT manager). That minter alone mints tokens that
+///  arrive from another chain and burns tokens that leave, so the supply across chains stays constant.
+///  No owner, no blacklist, no pause, no transfer tax.
 contract LaunchToken is ERC20 {
     uint256 public constant RELEASE_DURATION = 3600;
     uint256 private constant RATE_SCALE = 1e18;
@@ -19,6 +24,11 @@ contract LaunchToken is ERC20 {
 
     /// @notice The fee vault: the only address that can fund rewards or consume an account's earned rewards.
     address public immutable vault;
+
+    /// @notice May set the bridge minter once. Zero for regular launches, which can never be bridged.
+    address public immutable bridgeAdmin;
+    /// @notice The Wormhole NTT manager for the main coin; zero until set and for regular launches.
+    address public minter;
 
     mapping(address => bool) public isExcluded;
 
@@ -35,8 +45,14 @@ contract LaunchToken is ERC20 {
     mapping(address => uint256) public earned;
 
     error OnlyVault();
+    error NotBridgeAdmin();
+    error MinterAlreadySet();
+    error MinterHoldsTokens();
+    error InvalidMinterZeroAddress();
+    error CallerNotMinter(address caller);
 
     event RewardsFunded(uint256 amount, uint256 rate, uint64 periodFinish);
+    event NewMinter(address previousMinter, address newMinter);
 
     constructor(
         string memory name_,
@@ -44,14 +60,42 @@ contract LaunchToken is ERC20 {
         uint256 supply,
         address mintTo,
         address vault_,
+        address bridgeAdmin_,
         address[] memory excluded
     ) ERC20(name_, symbol_) {
         vault = vault_;
+        bridgeAdmin = bridgeAdmin_;
         for (uint256 i; i < excluded.length; ++i) {
             isExcluded[excluded[i]] = true;
         }
         // mintTo must be an excluded system address (the seed locker), so eligible supply starts at zero.
         _mint(mintTo, supply);
+    }
+
+    // ---------------------------------------------------------------- bridge (main coin only)
+
+    /// @notice Set the Wormhole NTT manager as the only minter. Once, by the bridge admin, never changed.
+    ///         The minter is excluded from rewards; it must hold no tokens when set.
+    function setMinter(address newMinter) external {
+        if (bridgeAdmin == address(0) || msg.sender != bridgeAdmin) revert NotBridgeAdmin();
+        if (minter != address(0)) revert MinterAlreadySet();
+        if (newMinter == address(0)) revert InvalidMinterZeroAddress();
+        if (balanceOf(newMinter) != 0) revert MinterHoldsTokens();
+        isExcluded[newMinter] = true;
+        minter = newMinter;
+        emit NewMinter(address(0), newMinter);
+    }
+
+    /// @notice Mint tokens that arrived from another chain (NTT `INttToken.mint`).
+    function mint(address account, uint256 amount) external {
+        if (minter == address(0) || msg.sender != minter) revert CallerNotMinter(msg.sender);
+        _mint(account, amount);
+    }
+
+    /// @notice Burn tokens that are leaving for another chain (NTT `INttToken.burn`, from the minter's balance).
+    function burn(uint256 amount) external {
+        if (minter == address(0) || msg.sender != minter) revert CallerNotMinter(msg.sender);
+        _burn(msg.sender, amount);
     }
 
     // ---------------------------------------------------------------- views

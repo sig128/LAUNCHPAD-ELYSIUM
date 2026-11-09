@@ -264,7 +264,7 @@ export function DiscoverPage() {
                       <th scope="col" className="w-[30%] px-3 py-2.5 font-normal">
                         Market
                       </th>
-                      {th('price', 'Price (HYPE)', 'text-right')}
+                      {th('price', 'Price (CANOPY)', 'text-right')}
                       {th('change', `${win} change`, 'text-right')}
                       {col.fdv ? th('fdv', 'FDV', 'text-right hidden lg:table-cell') : null}
                       {col.volume ? th('volume', `${win} volume`, 'text-right') : null}
@@ -391,7 +391,7 @@ export function DiscoverPage() {
           )}
           <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/6 pt-3 text-[13px] text-ink-3">
             <span className="num">
-              Showing {visible.length} of {rows.length}. Values in HYPE.
+              Showing {visible.length} of {rows.length}. Values in CANOPY.
             </span>
             {rows.length > visible.length ? (
               <button type="button" className="btn btn-glass h-9" onClick={() => setParams({ n: String(shown + PAGE) })}>
@@ -436,7 +436,7 @@ export function DiscoverPage() {
                   <TokenArt symbol={selectedToken.symbol} hue={selectedToken.hue} />
                   <div className="min-w-0 flex-1">
                     <Dialog.Title className="truncate font-medium">Trade {selectedToken.name}</Dialog.Title>
-                    <Dialog.Description className="text-[12.5px] text-ink-3">1.00% fee on the HYPE side.</Dialog.Description>
+                    <Dialog.Description className="text-[12.5px] text-ink-3">1.00% fee on the CANOPY side.</Dialog.Description>
                   </div>
                   <Dialog.Close className="btn btn-quiet h-9 w-9 p-0" aria-label="Close">
                     <IconClose size={16} />
@@ -496,12 +496,12 @@ function PlatformStrip() {
   if (!s) return null;
   return (
     <section data-enter style={ix(2)} aria-label="Platform statistics" className="panel grid grid-cols-2 gap-x-6 gap-y-3 px-4 py-3.5 sm:grid-cols-3 lg:grid-cols-6">
-      <Stat label="24h volume" value={`${fmtCompact(s.volume['24h'])} HYPE`} />
+      <Stat label="24h volume" value={`${fmtCompact(s.volume['24h'])} CANOPY`} />
       <Stat label="Active markets, 24h" value={`${s.activeMarkets24h} of ${s.launches}`} />
       <Stat label="Launches, 7d" value={s.launches7d} />
       <Stat label="Trader addresses, 24h" value={s.activeTraders24h} hint="Unique addresses, not unique people" />
-      <Stat label="Holder rewards released" value={`${fmtCompact(s.rewardsReleased)} HYPE`} hint="Released from collected fees under the one-hour release rule" />
-      <Stat label="Rewards claimed" value={`${fmtCompact(s.rewardsClaimed)} HYPE`} />
+      <Stat label="Holder rewards released" value={`${fmtCompact(s.rewardsReleased)} CANOPY`} hint="Released from collected fees under the one-hour release rule" />
+      <Stat label="Rewards claimed" value={`${fmtCompact(s.rewardsClaimed)} CANOPY`} />
     </section>
   );
 }
@@ -517,7 +517,7 @@ function SideSummary() {
       <div className="panel p-4">
         <h2 className="text-[15px] font-semibold">Your rewards</h2>
         <p className="mt-0.5 text-[12.5px] text-ink-3">{MODE === 'demo' ? 'Demo wallet' : 'Rewards start with the first market'}</p>
-        <div className="num mt-3 text-[26px] font-medium tracking-[-0.01em]">{fmtAmount(claimable, 18, 4)} HYPE</div>
+        <div className="num mt-3 text-[26px] font-medium tracking-[-0.01em]">{fmtAmount(claimable, 18, 4)} CANOPY</div>
         <p className="text-[13px] text-ink-2">claimable across {positions.filter((p) => p.rewardsClaimable > 0n).length} markets</p>
         <Link href="/rewards" className="btn btn-glass mt-3 w-full">
           Review rewards
@@ -548,10 +548,8 @@ function SideSummary() {
 
 export function FeeBar() {
   const parts = [
-    { label: 'Holders', pct: 60, color: 'bg-lime' },
-    { label: 'Reserve', pct: 10, color: 'bg-up/80' },
+    { label: 'Holders', pct: 80, color: 'bg-lime' },
     { label: 'Creator', pct: 10, color: 'bg-warn/80' },
-    { label: 'Liquidity growth', pct: 10, color: 'bg-[#7fb6d9]' },
     { label: 'Protocol', pct: 10, color: 'bg-ink-3' },
   ];
   return (
@@ -570,7 +568,7 @@ export function FeeBar() {
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-[12.5px] text-ink-3">Paid from fees actually collected. If a creator surrenders their share, holders get 70%.</p>
+      <p className="mt-3 text-[12.5px] text-ink-3">Paid from fees actually collected. If a creator gives up their share, holders get 90%.</p>
     </div>
   );
 }
@@ -601,7 +599,7 @@ function MarketCard({ r, win, watched, onWatch, anchor }: { r: RowData; win: Win
       </div>
       <Sparkline values={spark} />
       <div className="mt-2 flex items-baseline justify-between">
-        <span className="num text-[15px]">{fmtPrice(r.t.priceX18)} HYPE</span>
+        <span className="num text-[15px]">{fmtPrice(r.t.priceX18)} CANOPY</span>
         <Change value={r.change} className="text-[13.5px]" />
       </div>
       <div className="num mt-1 flex flex-wrap gap-x-3 text-[12px] text-ink-3">

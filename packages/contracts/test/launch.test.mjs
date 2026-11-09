@@ -42,7 +42,8 @@ const PORT = 8600 + Math.floor(Math.random() * 300);
 const RPC = `http://127.0.0.1:${PORT}`;
 // Anvil's default funded accounts come from this public test mnemonic.
 const MNEMONIC = 'test test test test test test test test test test test junk';
-const [deployer, creator, trader, other, treasury] = [0, 1, 2, 3, 4].map((i) => mnemonicToAccount(MNEMONIC, { addressIndex: i }));
+// `bridge` stands in for the Wormhole NTT manager that will be the main coin's only minter.
+const [deployer, creator, trader, other, treasury, bridge] = [0, 1, 2, 3, 4, 5].map((i) => mnemonicToAccount(MNEMONIC, { addressIndex: i }));
 const CREATE2_PROXY = '0x4e59b44847b379578588920ca78fbf26c0b4956c';
 const HOOK_FLAGS = (1n << 13n) | (1n << 11n) | (1n << 9n) | (1n << 7n) | (1n << 6n) | (1n << 5n) | (1n << 3n) | (1n << 2n);
 const ALL_HOOK_MASK = (1n << 14n) - 1n;
@@ -92,7 +93,7 @@ async function launch({ pair = zeroAddress, fdv = 3000n * E18, buy = 0n, salt = 
 
 const ledger = async (token) => {
   const v = await read(C.vault, A.FeeVault.abi, 'ledgers', [token]);
-  const k = ['pair', 'creator', 'registered', 'creatorSurrendered', 'feesTotal', 'holderFunded', 'holderPaid', 'creatorOwed', 'creatorPaid', 'reserve', 'liquidityBudget', 'protocolOwed', 'protocolPaid'];
+  const k = ['pair', 'creator', 'registered', 'creatorSurrendered', 'feesTotal', 'holderFunded', 'holderPaid', 'creatorOwed', 'creatorPaid', 'protocolOwed', 'protocolPaid'];
   return Object.fromEntries(k.map((key, i) => [key, v[i]]));
 };
 const claimsOf = (owner, currency) => read(C.pm, A.PoolManager.abi, 'balanceOf', [owner, BigInt(currency)]);
@@ -107,7 +108,7 @@ before(async () => {
   anvil = spawn(bin, ['--port', String(PORT), '--hardfork', 'cancun', '--silent'], { stdio: 'ignore' });
   pub = createPublicClient({ chain: foundry, transport: http(RPC) });
   testClient = createTestClient({ chain: foundry, mode: 'anvil', transport: http(RPC) });
-  for (const acct of [deployer, creator, trader, other, treasury]) {
+  for (const acct of [deployer, creator, trader, other, treasury, bridge]) {
     wallets[acct.address] = createWalletClient({ account: acct, chain: foundry, transport: http(RPC) });
   }
   for (let i = 0; i < 100; i++) {
@@ -167,8 +168,9 @@ test('launch with native HYPE: supply sits in the locked pool, fee splits exactl
 
   const l = await ledger(L.token);
   assert.equal(l.feesTotal, feeFor(E18));
-  assert.equal(l.holderFunded, 6n * 10n ** 15n);
-  assert.equal(l.reserve + l.creatorOwed + l.liquidityBudget + l.protocolOwed, 4n * 10n ** 15n);
+  assert.equal(l.holderFunded, 8n * 10n ** 15n, 'holders get 80%');
+  assert.equal(l.creatorOwed, 10n ** 15n);
+  assert.equal(l.protocolOwed, 10n ** 15n);
   assert.equal(await claimsOf(C.vault, 0n), l.feesTotal, 'vault holds the fee as ERC-6909 claims');
 
   // Opening price matches the requested FDV within one tick spacing (about 2%).
@@ -260,7 +262,7 @@ test('creator fees: only the creator claims; surrender sends the share to holder
   const l1 = await ledger(L.token);
   const fee = feeFor(3n * E18);
   assert.equal(l1.creatorOwed, l0.creatorOwed, 'no new creator fees after surrender');
-  assert.equal(l1.holderFunded - l0.holderFunded, fee - 3n * (fee / 10n), 'holders get 70% plus dust');
+  assert.equal(l1.holderFunded - l0.holderFunded, fee - fee / 10n, 'holders get 90% plus dust');
 });
 
 test('the hook and system contracts reject what they must', async () => {
@@ -296,6 +298,115 @@ test('pausing launches never blocks trading or claims', async () => {
   await testClient.mine({ blocks: 1 });
   await send(trader, C.vault, A.FeeVault.abi, 'claimHolderRewards', [L.token, trader.address]);
   await send(deployer, C.factory, A.Factory.abi, 'setLaunchesPaused', [false]);
+});
+
+test('the main coin launches once with its share of the supply; only its bridge minter mints or burns', async () => {
+  const HALF = SUPPLY / 2n;
+  const args = ['Canopy', 'CANOPY', 3000n * E18, HALF, true];
+  await reverts(() => send(other, C.factory, A.Factory.abi, 'launchMainCoin', args));
+  const r = await send(deployer, C.factory, A.Factory.abi, 'launchMainCoin', args);
+  await reverts(() => send(deployer, C.factory, A.Factory.abi, 'launchMainCoin', args));
+  const logs = parseEventLogs({ abi: A.Factory.abi, logs: r.logs });
+  const canopy = logs.find((l) => l.eventName === 'MainCoinLaunched').args.token;
+  const seed = logs.find((l) => l.eventName === 'SeedRange').args;
+  assert.equal(await read(C.factory, A.Factory.abi, 'mainCoin'), canopy);
+  assert.equal(await read(C.factory, A.Factory.abi, 'pairAllowed', [canopy]), true, 'launches can pair with it');
+  assert.equal(await read(canopy, A.Token.abi, 'totalSupply'), HALF, 'this chain holds half; the rest starts on Solana');
+  assert.equal(await read(canopy, A.Token.abi, 'bridgeAdmin'), deployer.address);
+
+  // It opens at the same price as a full 1B launch at the same FDV: this chain is a slice of one global curve.
+  const sqrt = Number(seed.sqrtPriceX96) / 2 ** 96;
+  const fdvHype = Number(SUPPLY / E18) / (sqrt * sqrt);
+  assert.ok(fdvHype <= 3000 * 1.021 && fdvHype >= 3000 / 1.021, `opening FDV ${fdvHype}`);
+  const inPool = await read(canopy, A.Token.abi, 'balanceOf', [C.pm]);
+  assert.ok(HALF - inPool < 10n ** 6n, 'the whole share sits in the locked seed');
+
+  // Regular launch tokens can never get a minter.
+  await reverts(() => send(deployer, C.native.token, A.Token.abi, 'setMinter', [bridge.address]));
+  // Only the bridge admin sets the minter, and only once.
+  await reverts(() => send(other, canopy, A.Token.abi, 'setMinter', [bridge.address]));
+  await send(deployer, canopy, A.Token.abi, 'setMinter', [bridge.address]);
+  await reverts(() => send(deployer, canopy, A.Token.abi, 'setMinter', [other.address]));
+  assert.equal(await read(canopy, A.Token.abi, 'isExcluded', [bridge.address]), true);
+  await reverts(() => send(other, canopy, A.Token.abi, 'mint', [other.address, 1n]));
+  await reverts(() => send(other, canopy, A.Token.abi, 'burn', [1n]));
+
+  // Arriving from Solana mints; leaving burns (NTT pulls the tokens, then burns them). Supply moves, never grows.
+  await send(bridge, canopy, A.Token.abi, 'mint', [other.address, 1000n * E18]);
+  assert.equal(await read(canopy, A.Token.abi, 'totalSupply'), HALF + 1000n * E18);
+  assert.equal(await read(canopy, A.Token.abi, 'eligibleSupply'), 1000n * E18);
+  await send(other, canopy, A.Token.abi, 'transfer', [bridge.address, 400n * E18]);
+  await send(bridge, canopy, A.Token.abi, 'burn', [400n * E18]);
+  assert.equal(await read(canopy, A.Token.abi, 'totalSupply'), HALF + 600n * E18);
+  assert.equal(await read(canopy, A.Token.abi, 'eligibleSupply'), 600n * E18);
+
+  // CANOPY holders earn from CANOPY's own market, in HYPE, like any launch.
+  const info = await read(C.factory, A.Factory.abi, 'launchInfo', [canopy]);
+  C.canopy = { token: canopy, key: info.key };
+  await send(trader, C.router, A.Router.abi, 'buy', [info.key, 5n * E18, 1n, trader.address, deadline()], 5n * E18);
+  await testClient.increaseTime({ seconds: 3600 });
+  await testClient.mine({ blocks: 1 });
+  const due = await read(canopy, A.Token.abi, 'claimable', [other.address]);
+  assert.ok(due > 0n, 'bridged-in holders earn');
+  const before = await pub.getBalance({ address: treasury.address });
+  await send(other, C.vault, A.FeeVault.abi, 'claimHolderRewards', [canopy, treasury.address]);
+  assert.ok((await pub.getBalance({ address: treasury.address })) - before >= due);
+  const l = await ledger(canopy);
+  assert.equal(l.creatorOwed, 0n, 'main coin gave its creator share to holders');
+});
+
+test('a CANOPY-paired launch trades from HYPE and back in one transaction, 1% per hop', async () => {
+  const canopy = C.canopy.token;
+  const L = await launch({ pair: canopy, fdv: 3000n * E18, salt: 500n });
+  const base = C.canopy.key; // currency0 = native HYPE, currency1 = CANOPY
+  const buyPath = [
+    { key: base, zeroForOne: true },
+    { key: L.key, zeroForOne: L.pairIs0 },
+  ];
+  const hypeClaims = await claimsOf(C.vault, 0n);
+  const canopyClaims = await claimsOf(C.vault, BigInt(canopy));
+  const canopyFees = (await ledger(L.token)).feesTotal;
+  const { result: out } = await pub.simulateContract({
+    account: trader, address: C.router, abi: A.Router.abi, functionName: 'swapExactIn',
+    args: [buyPath, 2n * E18, 1n, trader.address, deadline()], value: 2n * E18,
+  });
+  await send(trader, C.router, A.Router.abi, 'swapExactIn', [buyPath, 2n * E18, out, trader.address, deadline()], 2n * E18);
+  assert.equal(await read(L.token, A.Token.abi, 'balanceOf', [trader.address]), out);
+  assert.equal((await claimsOf(C.vault, 0n)) - hypeClaims, feeFor(2n * E18), 'hop 1 pays 1% in HYPE to CANOPY holders');
+  const hop2Fee = (await ledger(L.token)).feesTotal - canopyFees;
+  assert.ok(hop2Fee > 0n, 'hop 2 pays 1% in CANOPY to the coin holders');
+  assert.equal((await claimsOf(C.vault, BigInt(canopy))) - canopyClaims, hop2Fee);
+  assert.equal(await read(canopy, A.Token.abi, 'balanceOf', [C.router]), 0n, 'router keeps nothing');
+  assert.equal(await pub.getBalance({ address: C.router }), 0n);
+
+  // Straight back to HYPE.
+  const sellPath = [
+    { key: L.key, zeroForOne: !L.pairIs0 },
+    { key: base, zeroForOne: false },
+  ];
+  await send(trader, L.token, A.Token.abi, 'approve', [C.router, out]);
+  const hypeBefore = await pub.getBalance({ address: trader.address });
+  const r = await send(trader, C.router, A.Router.abi, 'swapExactIn', [sellPath, out, 1n, trader.address, deadline()]);
+  const got = (await pub.getBalance({ address: trader.address })) + r.gasUsed * r.effectiveGasPrice - hypeBefore;
+  assert.ok(got > 0n && got < 2n * E18, `round trip returns less than paid (${got})`);
+  assert.equal(await read(L.token, A.Token.abi, 'balanceOf', [trader.address]), 0n);
+
+  // Holders of the coin earn in CANOPY.
+  await send(other, C.router, A.Router.abi, 'swapExactIn', [buyPath, E18, 1n, other.address, deadline()], E18);
+  await send(trader, C.router, A.Router.abi, 'swapExactIn', [buyPath, E18, 1n, trader.address, deadline()], E18);
+  await testClient.increaseTime({ seconds: 3600 });
+  await testClient.mine({ blocks: 1 });
+  const due = await read(L.token, A.Token.abi, 'claimable', [other.address]);
+  const cBefore = await read(canopy, A.Token.abi, 'balanceOf', [other.address]);
+  await send(other, C.vault, A.FeeVault.abi, 'claimHolderRewards', [L.token, other.address]);
+  const cGot = (await read(canopy, A.Token.abi, 'balanceOf', [other.address])) - cBefore;
+  assert.ok(due > 0n && cGot >= due, `coin holders are paid in CANOPY (${cGot})`);
+
+  // Paths must connect, use CANOPY markets only, and match the HYPE sent.
+  await reverts(() => send(trader, C.router, A.Router.abi, 'swapExactIn', [[{ key: base, zeroForOne: true }, { key: C.native.key, zeroForOne: true }], E18, 1n, trader.address, deadline()], E18));
+  await reverts(() => send(trader, C.router, A.Router.abi, 'swapExactIn', [buyPath, E18, 1n, trader.address, deadline()], 0n));
+  await reverts(() => send(trader, C.router, A.Router.abi, 'swapExactIn', [[...buyPath, buyPath[0]], E18, 1n, trader.address, deadline()], E18));
+  await reverts(() => send(trader, C.router, A.Router.abi, 'swapExactIn', [[{ key: { ...base, tickSpacing: 60 }, zeroForOne: true }], E18, 1n, trader.address, deadline()], E18));
 });
 
 test('vault claims reconcile with per-launch ledgers for every pair asset', async () => {
