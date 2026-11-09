@@ -37,7 +37,7 @@ export function IntroOverlay({ stage, setStage }: { stage: Stage; setStage: (s: 
   const health = useHealth();
   const hl = healthLabel(health);
   const timers = useRef<number[]>([]);
-  const cta = useRef<HTMLButtonElement>(null);
+  const cta = useRef<HTMLAnchorElement>(null);
   const word = BRAND.name.charAt(0) + BRAND.name.slice(1).toLowerCase();
   const dot = { up: 'bg-up', warn: 'bg-warn', down: 'bg-down', neutral: 'bg-ink-3' }[hl.tone];
   const networkName = NETWORK.key === 'elysium' ? 'Elysium mainnet' : NETWORK.name.replace('Kinetiq ', '');
@@ -127,15 +127,19 @@ export function IntroOverlay({ stage, setStage }: { stage: Stage; setStage: (s: 
         <p className="intro-rise over-video mt-3 max-w-[34rem] text-[15.5px] text-ink-2 sm:text-[16.5px]" style={vars({ '--d': 880, '--o': 3 })}>
           {COPY.introSub}
         </p>
-        <button
+        {/* A real link, so it still opens the markets before scripts load; once loaded it plays the entrance. */}
+        <a
           ref={cta}
-          type="button"
-          onClick={enter}
+          href="/?seg=trending"
+          onClick={(e) => {
+            e.preventDefault();
+            enter();
+          }}
           className="intro-rise btn btn-primary cta-glow mt-9 h-[56px] min-w-[248px] rounded-[17px] px-8 text-[16.5px]"
           style={vars({ '--d': 1020, '--o': 4 })}
         >
           Get started
-        </button>
+        </a>
         <div
           className="intro-rise mt-5 flex items-center gap-2 rounded-full border border-white/10 bg-black/30 py-1 pl-3.5 pr-1 text-[13px] backdrop-blur-md"
           style={vars({ '--d': 1150, '--o': 5 })}

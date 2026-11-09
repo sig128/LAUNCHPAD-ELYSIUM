@@ -309,6 +309,13 @@ html[data-stage="leaving"] .intro-overlay {
   pointer-events: none;
 }
 
+/* Nothing of the workspace (including loading placeholders that render before scripts load)
+   may show behind the intro. */
+html[data-stage="intro"] .workspace,
+html[data-stage="leaving"] .workspace {
+  visibility: hidden;
+}
+
 html[data-stage="intro"] [data-enter],
 html[data-stage="leaving"] [data-enter],
 html[data-stage="intro"] [data-enter-row],

@@ -72,7 +72,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 </a>
                 <JungleBackground />
                 {pathname === '/' ? <IntroOverlay stage={stage} setStage={setStage} /> : null}
-                <div inert={introUp}>
+                <div className="workspace" inert={introUp}>
                   <Header />
                   <main
                     id="main"
